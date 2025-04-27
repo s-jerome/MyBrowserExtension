@@ -8,5 +8,18 @@
 	"browser_action":
 	{
 		"default_title": "MyBrowserExtension"
-	}
+	},
+	
+	"background":
+	{
+		"scripts": [ "/background/context-menu.js", "/background/background.js" ],
+		"persistent": true
+	},
+
+	"permissions": [ "<all_urls>", "storage", "tabs", "contextMenus" ],
+	
+	"web_accessible_resources":
+	[
+		"/features/VideoSleep/video-sleep-modal.html"
+	]
 }

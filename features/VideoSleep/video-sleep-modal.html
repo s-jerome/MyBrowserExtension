@@ -1,0 +1,382 @@
+<style>
+	:root {
+		--videosleep-bg-color: #181818; /* same color as Netflix */
+	}
+	
+	.video-sleep-container {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100vh;
+		z-index: 10000;
+		background-color: #18181881;
+	}
+	
+	#video-sleep-modal {
+		position: fixed;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		
+		font-size: 16px;
+		font-family: 'Verdana';
+		width: 550px;
+		margin: auto;
+		padding: 0px 20px;
+		background-color: var(--videosleep-bg-color);
+		box-shadow: #e50914 0px 3px 10px; /* same as a Netflix movie dialog, except that the color is the red of the NETFLIX logo */
+	}
+	
+	#video-sleep-modal * {
+		box-sizing: border-box;
+	}
+	
+	#video-sleep-modal button {
+		border-radius: 4px;
+		border: 0;
+		min-width: 100px;
+		background-color: white;
+		color: black;
+		height: 42px;
+		font-size: 24px;
+		font-weight: 500;
+		cursor: pointer;
+		text-align: center;
+	}
+	#video-sleep-modal button:hover {
+		background-color: rgb(230, 230, 230);
+	}
+	
+	#video-sleep-modal input {
+		width: 60px;
+		background-color: var(--videosleep-bg-color);
+		padding: 10px;
+		color: white;
+		font: inherit;
+	}
+	
+	#video-sleep-modal label {
+		color: white;
+	}
+	
+	#video-sleep-modal select {
+		color: black; /* need to be set for Netflix. */
+	}
+	
+	#video-sleep-modal span {
+		margin: 0;
+		padding: 0;
+		text-align: left;
+		color: white;
+		
+		font-size: 24px;
+		font-weight: bold;
+	}
+	
+	#video-sleep-modal .center-container {
+		display: flex;
+		align-items: center;
+	}
+	
+	#video-sleep-modal #scope {
+		width: 220px;
+		font: inherit;
+		height: 40px;
+	}
+	
+	#video-sleep-modal .setup-container {
+		display: flex;
+		flex-direction: column;
+	}
+	
+	#video-sleep-modal .setup-container > div {
+		height: 80px;
+	}
+	
+	#video-sleep-modal .setup-container label {
+		display: inline-block;
+		width: 100px;
+	}
+	
+	#video-sleep-modal .status-container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		border-bottom: 1px solid red;
+		height: 80px;
+	}
+</style>
+<div id="video-sleep-modal">
+	<div class="status-container">
+		<div>
+			<span>Sleep:</span>
+			<span id="status"></span>
+		</div>
+		<button id="stop" style="display: none;">Stop</button>
+	</div>
+	<div class="setup-container">
+		<div class="center-container">
+			<label for="scope">Scope:</label>
+			<select id="scope">
+				<option value="page">Page (Content script)</option>
+				<option value="background">Background</option>
+			</select>
+		</div>
+		<div class="center-container">
+			<div class="center-container" style="margin-right: 30px;">
+				<label for="minutes">Minutes:</label>
+				<input id="minutes" value="60" autocomplete="off" />
+			</div>
+			<div>
+				<button id="min30">30min</button>
+				<button id="min60">60min</button>
+			</div>
+		</div>
+		<div class="center-container" style="justify-content: center;">
+			<button id="add-or-update-video-sleep">Add</button>
+		</div>
+	</div>
+	
+	<script type="text/javascript">
+		console.log(new Date().toLocaleString() + " -- [VideoSleep] Modal loaded.");
+		
+		let _redirectUrl = "https://www.google.com/";
+		
+		/**
+		 * Determine if the modal is closed after the click on the button STOP.
+		 */
+		let _closeAfterStop = false;
+		
+		/**
+		 * The interval used to calcul the time left before the end of the sleep, if enabled.
+		 * @type {Number} 
+		 */
+		let _timeLeftInterval = null;
+		
+		/** @type {HTMLDivElement} */
+		let _videoSleepModal = document.getElementById("video-sleep-modal");
+		
+		/** @type {HTMLDivElement} */
+		let _containerEl = _videoSleepModal.parentElement;
+		_containerEl.addEventListener("click", function(pointerEvent) {
+			if (pointerEvent != null && pointerEvent.target != _containerEl)
+				return;
+			closeModal();
+		});
+		_containerEl.className = "video-sleep-container";
+		
+		/** @type {HTMLButtonElement} */
+		let _addOrUpdateButton = _videoSleepModal.querySelector("#add-or-update-video-sleep");
+		_addOrUpdateButton.addEventListener("click", function () {
+			let minutes = parseInt(_minutesInput.value);
+			if (isNaN(minutes) || minutes <= 0) {
+				alert("Minutes are invalid.");
+				return;
+			}
+			
+			let scope = _scopeSelect.value;
+			if (scope == "page") {
+				if (window.videoSleepData != null && window.videoSleepData.timeout != null)
+					clearTimeout(window.videoSleepData.timeout);
+				window.videoSleepData = {};
+				window.videoSleepData.scope = scope;
+				window.videoSleepData.minutes = minutes;
+				window.videoSleepData.timeout = setTimeout(function() {
+					//.. Useless to write this in the console, considering it will be cleared after the redirection.
+					console.log(new Date().toLocaleString() + " -- [VideoSleep] timeout over.");
+					//.. Useless considering the variable won't exist anymore after the redirection.
+					window.videoSleepData = null;
+					document.location.href = _redirectUrl;
+				}, minutes * 60 * 1000);
+				window.videoSleepData.startedAt = new Date();
+				onTimeoutCreated(minutes, scope);
+			} else {
+				_addOrUpdateButton.disabled = true;
+				
+				let message = {
+					feature: "VideoSleep",
+					action: "create",
+					minutes: minutes,
+					scope: scope,
+					redirectUrl: _redirectUrl,
+					addOrUpdate: _addOrUpdateButton.innerText.toLowerCase()
+				};
+				chrome.runtime.sendMessage(message, processBackgroundResponse);
+			}
+		});
+		
+		/** @type {HTMLButtonElement} */
+		let _stopButton = _videoSleepModal.querySelector("#stop");
+		_stopButton.addEventListener("click", function () {
+			let scope = _scopeSelect.value;
+			if (scope == "page") {
+				console.log(new Date().toLocaleString() + " -- [VideoSleep] stop.");
+				clearTimeout(window.videoSleepData.timeout);
+				window.videoSleepData = null;
+				onTimeoutStopped();
+			} else {
+				_stopButton.disabled = true;
+				_stopButton.innerText = "Stopping...";
+				let message = {
+					feature: "VideoSleep",
+					action: "stop"
+				};
+				chrome.runtime.sendMessage(message, processBackgroundResponse);
+			}
+		});
+		
+		let _statusSpan = _videoSleepModal.querySelector("#status");
+		
+		/** @type {HTMLSelectElement} */
+		let _scopeSelect = _videoSleepModal.querySelector("#scope");
+		
+		/** @type {HTMLInputElement} */
+		let _minutesInput = _videoSleepModal.querySelector("#minutes");
+		_minutesInput.focus();
+		_minutesInput.addEventListener("keydown", function(keyboardEvent) {
+			if (keyboardEvent.key == "ArrowUp") {
+				//.. Increase the number as long as the ArrowUp is pressed.
+				let minutes = parseInt(_minutesInput.value);
+				if (isNaN(minutes) || minutes <= 0) {
+					minutes = 1;
+				} else {
+					minutes++;
+				}
+				_minutesInput.value = minutes;
+			} else if (keyboardEvent.key == "ArrowDown") {
+				//.. Decrease the number as long as the ArrowDown is pressed.
+				let minutes = parseInt(_minutesInput.value);
+				if (isNaN(minutes) || minutes < 1) {
+					minutes = 1;
+				} else if (minutes > 1) {
+					minutes--;
+				} else {
+					return;
+				}
+				_minutesInput.value = minutes;
+			} else if (keyboardEvent.key == "Enter") {
+				_addOrUpdateButton.click();
+			}
+			
+			//.. Specially usefull for tv.orange.fr because when taping a number it changes the TV channel.
+			keyboardEvent.stopPropagation();
+		});
+		
+		_videoSleepModal.querySelector("#min30").addEventListener("click", function() {
+			_minutesInput.value = "30";
+		});
+		_videoSleepModal.querySelector("#min60").addEventListener("click", function() {
+			_minutesInput.value = "60";
+		});
+		
+		function processBackgroundResponse(response) {
+			console.log(new Date().toLocaleString() + " -- [VideoSleep] Backgroud response:", response);
+			if (response.action == "getData") {
+				_backgroundSleep = response.videoSleepData;
+				if (response.videoSleepData == null) {
+					_statusSpan.innerText = "Off";
+					
+					let lastValue = localStorage.getItem("VideoSleep");
+					if (lastValue != null) {
+						let last = JSON.parse(lastValue);
+						_scopeSelect.value = last.scope;
+						_minutesInput.value = last.minutes;	
+					}
+					
+					_addOrUpdateButton.innerText = "Add";
+				} else {
+					displayData(response.videoSleepData);
+				}
+			} else if (response.action == "create") {
+				onTimeoutCreated(response.minutes, response.scope);
+			} else if (response.action == "stop") {
+				console.log(new Date().toLocaleString() + " -- [VideoSleep] background timeout stopped.");
+				onTimeoutStopped();
+			}
+		}
+		
+		/**
+		 * @param {Number} minutes 
+		 * @param {String} scope 
+		 */
+		 function onTimeoutCreated(minutes, scope) {
+			let now = new Date();
+			localStorage.setItem("VideoSleep", JSON.stringify({ scope: scope, minutes: minutes, startedAt: now }));
+			let addOrUpdate = _addOrUpdateButton.innerText.toLowerCase();
+			console.log(now.toLocaleString() + " -- [VideoSleep] " + addOrUpdate + " sleep of " + minutes + " min in the " + scope + " scope.");
+			closeModal();
+		}
+		
+		function onTimeoutStopped() {
+			if (_closeAfterStop) {
+				closeModal();
+			} else {
+				stopTimeLeftInterval();
+				_stopButton.style.display = "none";
+				_statusSpan.innerText = "Off";
+				_scopeSelect.disabled = false;
+				_addOrUpdateButton.innerText = "Add";
+			}
+		}
+		
+		function stopTimeLeftInterval() {
+			if (_timeLeftInterval != null)
+				clearInterval(_timeLeftInterval);
+		}
+		
+		/**
+		 * Close the dialog by removing its container.
+		 */
+		 function closeModal() {
+			stopTimeLeftInterval();
+			_containerEl.remove();
+		}
+		
+		function displayData(videoSleepData) {
+			displayTimeLeft(videoSleepData.startedAt, videoSleepData.minutes);
+			_timeLeftInterval = setInterval(function() {
+				displayTimeLeft(videoSleepData.startedAt, videoSleepData.minutes);
+			}, 1000);
+			_addOrUpdateButton.innerText = "Update";
+			_scopeSelect.value = videoSleepData.scope;
+			_scopeSelect.disabled = true;
+			_minutesInput.value = videoSleepData.minutes;
+			_stopButton.style.display = "";
+		}
+		
+		/**
+		 * Display the time left before the end of the sleep.
+		 * @param {Date} startedAt 
+		 * @param {Number} minutes 
+		 */
+		function displayTimeLeft(startedAt, minutes) {
+			let endDate = new Date(startedAt);
+			endDate.setMinutes(endDate.getMinutes() + minutes);
+			let now = new Date();
+			let totalSeconds = parseInt((endDate - now) / 1000);
+			if (totalSeconds > 60) {
+				let all = totalSeconds / 60;
+				let minutes = parseInt(all);
+				let left = all - minutes;
+				let seconds = parseInt(left * 60);
+				_statusSpan.innerText = "On (" + minutes.toString().padStart(2, "0") + ":" + seconds.toString().padStart(2, "0") + "min left)";
+			} else {
+				_statusSpan.innerText = "On (" + totalSeconds.toString().padStart(2, "0") + "sec left)";
+			}
+		}
+		
+		if (window.videoSleepData != null) {
+			displayData(window.videoSleepData);
+		} else {
+			//.. There is no sleep in the page scope,
+			//.. but maybe there is one in the background scope.
+			_statusSpan.innerText = "...";
+			let message = {
+				feature: "VideoSleep",
+				action: "getData"
+			};
+			chrome.runtime.sendMessage(message, processBackgroundResponse);
+		}
+	</script>
+</div>
