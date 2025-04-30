@@ -2,7 +2,7 @@
  * Listen the "keydown" event to intercept the "ArrowLeft" and "ArrowRight" 
  * so that I can change the forward and backward jump times from the 10 seconds by default.
  */
-(function () {
+const caoglSeek = (function () {
 	console.log(new Date().toLocaleString() + " -- [Netflix-is-seek] Script started.");
 	
 	let _jumpTimes = {
@@ -79,28 +79,6 @@
 			});
 		}
 		return true;
-	}
-	
-	/**
-	 * Determine if the given element is, or contains, the element able to intercept the "keydown" event.
-	 * @param {HTMLElement} element 
-	 */
-	function isOrContainsPlayerElement(element) {
-		let success = isPlayerElement(element);
-		if (success)
-			return success;
-		
-		if (element.children.length == 0)
-			return false;
-		
-		for (let i = 0; i < element.children.length; i++) {
-			let child = element.children[i];
-			let childSuccess = isPlayerElement(child);
-			if (childSuccess)
-				return childSuccess;
-		}
-		
-		return false;
 	}
 	
 	/**
@@ -197,32 +175,6 @@
 		localStorage.setItem("caoglSeek", JSON.stringify(_jumpTimes));
 	}
 	
-	const mutationObserver = new MutationObserver(function (mutations) {
-		for (let mutationIndex = 0; mutationIndex < mutations.length; mutationIndex++) {
-			let mutation = mutations[mutationIndex];
-			for (let nodeIndex = 0; nodeIndex < mutation.addedNodes.length; nodeIndex++) {
-				/**
-				 * @type {HTMLElement}
-				 */
-				let addedNode = mutation.addedNodes[nodeIndex];
-				if (addedNode.nodeType != Node.ELEMENT_NODE)
-					continue;
-				
-				if (isOrContainsPlayerElement(addedNode))
-					break;
-			}
-		}
-	});
-	
-	mutationObserver.observe(document.body || document.documentElement, {
-		attributes: false,
-		attributeOldValue: false,
-		childList: true,
-		characterData: false,
-		characterDataOldValue: false,
-		subtree: true
-	});
-	
 	window.addEventListener("caoglSeekIS", function (customEvent) {
 		if (customEvent.detail == null || customEvent.detail.action == null)
 			return;
@@ -239,8 +191,35 @@
 		}
 	});
 	
-	//.. Export of the function.
-	window.caoglSeek = {};
-	window.caoglSeek.getAPIPlayer = getAPIPlayer;
-	window.caoglSeek.setJumpTimes = setJumpTimes;
+	return {
+		getAPIPlayer() {
+			return getAPIPlayer();
+		},
+		
+		/**
+		 * Determine if the given element is, or contains, the element able to intercept the "keydown" event.
+		 * @param {HTMLElement} element 
+		 */
+		isOrContainsPlayerElement(element) {
+			let success = isPlayerElement(element);
+			if (success)
+				return success;
+			
+			if (element.children.length == 0)
+				return false;
+			
+			for (let i = 0; i < element.children.length; i++) {
+				let child = element.children[i];
+				let childSuccess = isPlayerElement(child);
+				if (childSuccess)
+					return childSuccess;
+			}
+			
+			return false;
+		},
+		
+		setJumpTimes(small, medium, large) {
+			setJumpTimes(small, medium, large);
+		}
+	}
 })();
