@@ -1,0 +1,23 @@
+body {
+	font-size: 18px;
+	width: 350px;
+}
+
+.row {
+	align-items: center;
+	display: flex;
+	margin: 15px 0px;
+}
+
+label {
+	display: block;
+	text-align: right;
+	width: 50%;
+}
+
+input {	
+	font: inherit;
+	margin-left: 10px;
+	text-align: right;
+	width: 60px;
+}

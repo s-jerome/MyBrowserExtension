@@ -3,11 +3,12 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	
 	"browser_action":
 	{
-		"default_title": "MyBrowserExtension"
+		"default_title": "MyBrowserExtension",
+		"default_popup": "/popup/popup.html"
 	},
 	
 	"background":
@@ -24,6 +25,14 @@
 			"match_about_blank": false,
 			"matches": [ "https://*.linkedin.com/*" ],
 			"run_at": "document_start"
+		},
+		
+		{
+			"all_frames": false,
+			"js": [ "/sites/Netflix/netflix.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://*.netflix.com/*" ],
+			"run_at": "document_start"
 		}
 	],
 	
@@ -33,6 +42,7 @@
 	[
 		"/features/VideoSleep/video-sleep-modal.html",
 		
-		"/sites/LinkedIn/linkedin-is-post-absolute-date.js"
+		"/sites/LinkedIn/linkedin-is-post-absolute-date.js",
+		"/sites/Netflix/netflix-is-seek.js"
 	]
 }
