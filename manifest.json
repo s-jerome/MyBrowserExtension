@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	
 	"browser_action":
 	{
@@ -19,6 +19,14 @@
 	
 	"content_scripts":
 	[
+		{
+			"all_frames": false,
+			"js": [ "/sites/Instagram/instagram.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://*.instagram.com/*" ],
+			"run_at": "document_end"
+		},
+		
 		{
 			"all_frames": false,
 			"js": [ "/sites/LinkedIn/linkedin.js" ],
