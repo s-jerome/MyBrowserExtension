@@ -1,9 +1,9 @@
 {
 	"manifest_version": 2,
-
+	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	
 	"browser_action":
 	{
@@ -15,11 +15,24 @@
 		"scripts": [ "/background/context-menu.js", "/background/background.js" ],
 		"persistent": true
 	},
-
+	
+	"content_scripts":
+	[
+		{
+			"all_frames": false,
+			"js": [ "/sites/LinkedIn/linkedin.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://*.linkedin.com/*" ],
+			"run_at": "document_start"
+		}
+	],
+	
 	"permissions": [ "<all_urls>", "storage", "tabs", "contextMenus" ],
 	
 	"web_accessible_resources":
 	[
-		"/features/VideoSleep/video-sleep-modal.html"
+		"/features/VideoSleep/video-sleep-modal.html",
+		
+		"/sites/LinkedIn/linkedin-is-post-absolute-date.js"
 	]
 }
