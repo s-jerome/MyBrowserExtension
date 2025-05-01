@@ -1,9 +1,9 @@
 console.log(new Date().toLocaleString() + " -- [LinkedIn] Script started.");
 
 /**
- * Inject the script displaying the absolute date of a post.
+ * Get the post id from the url.
  */
-(function injectPostScript() {
+function getPostId() {
 	/**
 	 * The regex used to know if the url of the post is in the "post" form, lookink like this:
 	 * https://www.linkedin.com/posts/<author-name>_<slug>-activity-<post-id>-<4-chars>/
@@ -23,7 +23,7 @@ console.log(new Date().toLocaleString() + " -- [LinkedIn] Script started.");
 		let feedPageMatch = document.location.href.match(REGEX_POST_FEED);
 		if (feedPageMatch == null) {
 			//.. The page is not a post page, so no need to inject the script.
-			return;
+			return postId;
 		}
 		else {
 			postId = feedPageMatch.groups["postId"];
@@ -32,6 +32,14 @@ console.log(new Date().toLocaleString() + " -- [LinkedIn] Script started.");
 		postId = postPageMatch.groups["postId"];
 	}
 	
+	return postId;
+}
+
+/**
+ * Inject the script displaying the absolute date of a post.
+ * @param {String} postId 
+ */
+function injectPostScript(postId) {
 	//.. The content script is run at document_start, so the document might not be ready yet.
 	if (document.readyState == "interactive" || document.readyState == "complete") {
 		handlePageLoaded();
@@ -51,5 +59,29 @@ console.log(new Date().toLocaleString() + " -- [LinkedIn] Script started.");
 		let scriptEl = document.createElement("script");
 		scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-post-absolute-date.js");
 		document.head.appendChild(scriptEl);
+	}
+}
+
+(function () {
+	let postId = getPostId();
+	if (postId != "") {
+		injectPostScript(postId);
+	}
+	
+	if (document.location.href.indexOf("/posts/") < 0) {
+		//.. Maybe I'm on the homepage, where posts are listed.
+		//.. Or maybe I'm in a post page but the url is in the "feed" format.
+		//.. In that case, I want my "Open" button to open the post with its "post" format.
+		//.. I inject the script adding a button to open posts on new tabs.
+		
+		let scriptEl = document.createElement("script");
+		scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-open-post-new-tab.js");
+		scriptEl.onload = function () {
+			window.addEventListener("caoglOpenTab", function (customEvent) {
+				chrome.runtime.sendMessage(customEvent.detail);
+			});
+		};
+		let e = document.body || document.documentElement;
+		e.appendChild(scriptEl);
 	}
 })();

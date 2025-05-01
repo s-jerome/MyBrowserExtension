@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "2.1.0",
+	"version": "3.0.0",
 	
 	"browser_action":
 	{
@@ -50,6 +50,7 @@
 	[
 		"/features/VideoSleep/video-sleep-modal.html",
 		
+		"/sites/LinkedIn/linkedin-is-open-post-new-tab.js",
 		"/sites/LinkedIn/linkedin-is-post-absolute-date.js",
 		
 		"/sites/Netflix/netflix-is.js",

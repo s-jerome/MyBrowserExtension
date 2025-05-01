@@ -33,4 +33,33 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 		}
 		return;
 	}
+	
+	if (message.site != null) {
+		if (message.site == "LinkedIn") {
+			if (message.action == "openTab") {
+				openTab(message.url, sender.tab);
+			}
+		}
+		return;
+	}
 });
+
+/**
+ * 
+ * @param {String} url 
+ * @param {any} fromTab The tab from which the new tab is open.
+ */
+function openTab(url, fromTab) {
+	chrome.tabs.query({ windowId: fromTab.windowId }, function (tabs) {
+		let index = fromTab.index + 1;
+		while (index < tabs.length) {
+			let tab = tabs[index];
+			if (tab.openerTabId == null || tab.openerTabId != fromTab.id)
+				break;
+			index++;
+		}
+		//.. Note: If I'm debugging with the background page open and a breakpoint,
+		//.. to make this code working, the windowId must be set.
+		chrome.tabs.create({ active: false, url: url, index: index, openerTabId: fromTab.id, windowId: fromTab.windowId });
+	});
+}
