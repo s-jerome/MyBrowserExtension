@@ -62,7 +62,32 @@ function injectPostScript(postId) {
 	}
 }
 
+/**
+ * Inject the script intercepting the fetch requests to block those made by the site on "chrome-extension://".
+ */
+function injectRequestBlockingScript() {
+	let scriptEl = document.createElement("script");
+	scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-request-blocking.js");
+	scriptEl.onload = function () {
+		chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+			if (message.action == "getConfig") {
+				let requestBlocking = localStorage.getItem("caoglRequestBlocking");
+				message.requestBlockingIsEnabled = (requestBlocking != null && requestBlocking == "true") ? true : false;
+				sendResponse(message);
+			} else if (message.action == "setConfig") {
+				localStorage.setItem("caoglRequestBlocking", message.requestBlockingIsEnabled);
+				//.. Just respond something so that the popup knows everything went well.
+				sendResponse(message);
+			}
+		});
+	};
+	let e = document.body || document.documentElement;
+	e.appendChild(scriptEl);
+}
+
 (function () {
+	injectRequestBlockingScript();
+	
 	let postId = getPostId();
 	if (postId != "") {
 		injectPostScript(postId);

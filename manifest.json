@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "3.0.0",
+	"version": "3.1.0",
 	
 	"browser_action":
 	{
@@ -52,6 +52,7 @@
 		
 		"/sites/LinkedIn/linkedin-is-open-post-new-tab.js",
 		"/sites/LinkedIn/linkedin-is-post-absolute-date.js",
+		"/sites/LinkedIn/linkedin-is-request-blocking.js",
 		
 		"/sites/Netflix/netflix-is.js",
 		"/sites/Netflix/netflix-is-elapsed-time.js",
