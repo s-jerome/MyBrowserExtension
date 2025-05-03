@@ -16,9 +16,16 @@
 			font: inherit;
 			padding: 6px 12px;
 		}
-		button:hover, button:focus {
+		button:active {
+			color: darkcyan;
+			text-decoration: underline;
+		}
+		button:hover:not(:disabled), button:focus:not(:disabled) {
 			background-color: lightblue;
 			cursor: pointer;
+		}
+		input {	
+			font: inherit;
 		}
 		#title {
 			text-align: center;

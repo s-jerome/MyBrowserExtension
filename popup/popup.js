@@ -19,6 +19,16 @@ chrome.tabs.getSelected(function (selectedTab) {
 		injectJS("/popup/LinkedIn/popup-linkedin.js");
 	} else if (selectedTab.url.indexOf("netflix.com/") >= 0) {
 		injectCSS("/popup/Netflix/popup-netflix.css");
-		injectJS("/popup/Netflix/popup-netflix.js");		
+		injectJS("/popup/Netflix/popup-netflix.js");
+	} else if (selectedTab.url.indexOf("tv.orange.fr/") >= 0) {
+		document.body.innerHTML = "";
+		let url = chrome.extension.getURL("/popup/tv.orange.fr/tv.orange.fr.html");
+		fetch(url).then(function (response) {
+			response.text().then(function (text) {
+				document.body.innerHTML = text;
+				injectCSS("/popup/tv.orange.fr/tv.orange.fr.css");
+				injectJS("/popup/tv.orange.fr/tv.orange.fr.js");
+			});
+		});
 	}
 });
