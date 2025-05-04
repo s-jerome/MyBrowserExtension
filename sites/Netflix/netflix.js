@@ -1,6 +1,16 @@
 (function () {
 	console.log(new Date().toLocaleString() + " -- [Netflix] Script started.");
 	
+	/**
+	 * Inject some CSS to undo some rules made by Netflix preventing some texts to be selectable.
+	 */
+	function injectCSS() {
+		let cssEl = document.createElement("style");
+		cssEl.id = "caogl-css";
+		cssEl.innerHTML = "body, html { user-select: auto; -webkit-user-select: auto; cursor: auto; }";
+		document.head.appendChild(cssEl);
+	}
+	
 	async function injectScript(jsFilePath) {
 		return new Promise(function (resolve, reject) {
 			try {
@@ -46,6 +56,8 @@
 	}
 	
 	async function init() {
+		injectCSS();
+		
 		await injectElapsedTimeScript();
 		await injectSeekScript();
 		//.. The main script is injected last because it is the one interacting with the others.
