@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "3.3.0",
+	"version": "3.4.0",
 	
 	"browser_action":
 	{
@@ -53,7 +53,7 @@
 		
 		{
 			"all_frames": false,
-			"js": [ "/sites/Twitter/twitter-mark-tweet-as-seen.js" ],
+			"js": [ "/sites/Twitter/twitter.js", "/sites/Twitter/twitter-mark-tweet-as-seen.js" ],
 			"match_about_blank": false,
 			"matches": [ "https://*.twitter.com/*", "https://*.x.com/*" ],
 			"run_at": "document_start"
@@ -74,6 +74,8 @@
 		"/sites/Netflix/netflix-is-elapsed-time.js",
 		"/sites/Netflix/netflix-is-seek.js",
 		
-		"/sites/tv.orange.fr/tv.orange.fr.css"
+		"/sites/tv.orange.fr/tv.orange.fr.css",
+		
+		"/sites/Twitter/twitter-is-remove-promoted-tweets.js"
 	]
 }
