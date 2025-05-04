@@ -39,6 +39,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			if (message.action == "openTab") {
 				openTab(message.url, sender.tab);
 			}
+		} else if (message.site == "Twitter") {
+			if (message.action == "getMarkedTweets") {
+				let markedTweets = Twitter.getMarkedTweets(message.lastSyncISO);
+				sendResponse(markedTweets);
+			} else if (message.action == "markTweet") {
+				Twitter.addMarkedTweet(message.tweetId);
+				//.. Send a response so that the content script knows it worked.
+				sendResponse(message);
+			} else if (message.action == "openTab") {
+				openTab(message.url, sender.tab);
+			}
 		}
 		return;
 	}

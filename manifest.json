@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "3.2.0",
+	"version": "3.3.0",
 	
 	"browser_action":
 	{
@@ -13,7 +13,7 @@
 	
 	"background":
 	{
-		"scripts": [ "/background/context-menu.js", "/background/background.js" ],
+		"scripts": [ "/background/context-menu.js", "/background/sites/bg-twitter.js", "/background/background.js" ],
 		"persistent": true
 	},
 	
@@ -49,6 +49,14 @@
 			"match_about_blank": false,
 			"matches": [ "https://tv.orange.fr/*" ],
 			"run_at": "document_end"
+		},
+		
+		{
+			"all_frames": false,
+			"js": [ "/sites/Twitter/twitter-mark-tweet-as-seen.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://*.twitter.com/*", "https://*.x.com/*" ],
+			"run_at": "document_start"
 		}
 	],
 	
