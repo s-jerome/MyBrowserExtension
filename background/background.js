@@ -50,6 +50,16 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			} else if (message.action == "openTab") {
 				openTab(message.url, sender.tab);
 			}
+		} else if (message.site == "Youtube") {
+			if (message.action == "getRatedVideos") {
+				let ratedVideos = Youtube.getRatedVideos(message.lastSyncTime);
+				sendResponse(ratedVideos);
+			} else if (message.action == "setRatedVideo") {
+				Youtube.setRatedVideoAsync(message.videoDetails, message.rating).then(function (result) {
+					sendResponse(result);
+				});
+				return true;
+			}
 		}
 		return;
 	}
