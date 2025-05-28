@@ -14,18 +14,6 @@ const caoglRatingVideo = (function () {
 	 */
 	let _lastSyncTime = 0;
 	
-	/**
-	 * The observer of the body to get notice when the title of videos are added to the DOM. 
-	 * @type {MutationObserver}
-	 */
-	let _mutationObserver = null;
-	
-	/**
-	 * The HTML elements attached to a MutationObserver to observe the changes of their text.
-	 * @type {Array<HTMLElement>}
-	 */
-	let _observedElements = [];
-	
 	window.addEventListener("caoglGetRatedVideosIS", function (customEvent) {
 		if (customEvent.detail == null)
 			return;
@@ -46,148 +34,22 @@ const caoglRatingVideo = (function () {
 		
 		_lastSyncTime = Date.now();
 		
-		processVideoTitleElements(document.body);
-		
-		observeBody();
+		refresh();
 	});
 	
 	/**
-	 * Observe the adding of #video-title elements in the body.
+	 * Ask the Observer script to get all the #video-title elements to refresh them based on their rating.
 	 */
-	function observeBody() {
-		if (_mutationObserver != null)
-			return;
+	function refresh() {
+		if (window.caoglObserver != null)
+			caoglObserver.processVideoTitleElements();
 		
-		_mutationObserver = new MutationObserver(function (mutations) {
-			let elementsAreRemoved = false;
-			for (let mutationIndex = 0; mutationIndex < mutations.length; mutationIndex++) {
-				let mutation = mutations[mutationIndex];
-				for (let nodeIndex = 0; nodeIndex < mutation.addedNodes.length; nodeIndex++) {
-					/** @type {HTMLElement} */
-					let addedNode = mutation.addedNodes[nodeIndex];
-					if (addedNode.nodeType != Node.ELEMENT_NODE)
-						continue;
-					if (addedNode.id == "video-title")
-						processVideoTitleElement(addedNode);
-					else {
-						processVideoTitleElements(addedNode);
-					}
-				}
-				
-				if (mutation.removedNodes.length > 0)
-					elementsAreRemoved = true;
-			}
-			if (elementsAreRemoved)
-				stopObservingRemovedElements();
-		});
-		_mutationObserver.observe(document.body, {
-			attributes: false,
-			childList: true,
-			characterData: false,
-			subtree: true
-		});
-	}
-	
-	/**
-	 * Find all the video titles on the page and change their color.
-	 * @param {HTMLElement} parent 
-	 */
-	function processVideoTitleElements(parent) {
-		//.. It's easy: every videos (in the homepage or in a playlist
-		//.. or on the right as suggested videos, or whatever...) have their title in a #video-title element.
-		let videoTitleEls = Array.from(parent.querySelectorAll("#video-title"));
-		videoTitleEls.forEach(el => processVideoTitleElement(el));
-	}
-	
-	/**
-	 * Change the color of the given element and observe its text changes.
-	 * @param {HTMLElement} videoTitleEl 
-	 */
-	function processVideoTitleElement(videoTitleEl) {
-		let videoId = getVideoIdFromTitleElement(videoTitleEl);
-		if (videoId == "")
-			return;
-		changeVideoTitleColor(videoTitleEl, videoId);
-		observeVideoTitleElement(videoTitleEl);
-	}
-	
-	/**
-	 * @param {HTMLElement} videoTitleEl 
-	 */
-	function getVideoIdFromTitleElement(videoTitleEl) {
-		if (document.location.href.indexOf("/playlist?list=") < 0) {
-			if (videoTitleEl.__dataHost == null)
-				return ""; //.. Maybe the video is an ad (promoted).
-			if (videoTitleEl.__dataHost.__data == null || videoTitleEl.__dataHost.__data.data == null || videoTitleEl.__dataHost.__data.data.videoId == null)
-				return "";
-			return videoTitleEl.__dataHost.__data.data.videoId;
-		} else {
-			if (videoTitleEl.data == null || videoTitleEl.data.watchEndpoint == null || videoTitleEl.data.watchEndpoint.videoId == null)
-				return "";
-			return videoTitleEl.data.watchEndpoint.videoId;
-		}
-	}
-	
-	/**
-	 * Observe the changes of the text of the given video title element.
-	 * @param {HTMLElement} videoTitleEl 
-	 */
-	function observeVideoTitleElement(videoTitleEl) {
-		if (videoTitleEl.__caogl_mo != null)
-			return;
-		
-		let mo = new MutationObserver(function (mutations) {
-			let videoId = getVideoIdFromTitleElement(videoTitleEl);
-			if (videoId == "")
-				return;
-			changeVideoTitleColor(videoTitleEl, videoId);
-		});
-		mo.observe(videoTitleEl, {
-			attributes: false,
-			childList: true,
-			characterData: true,
-			characterDataOldValue: true,
-			subtree: true,
-		});
-		videoTitleEl.__caogl_mo = mo;
-		_observedElements.push(videoTitleEl);
-	}
-	
-	/**
-	 * Loop through the observed elements and disconnect their MutationObserve if they were removed from the DOM.
-	 */
-	function stopObservingRemovedElements() {
-		for (let i = _observedElements.length - 1; i >= 0; i--) {
-			let element = _observedElements[i];
-			if (element.isConnected)
-				continue;
-			if (element.__caogl_mo != null) {
-				element.__caogl_mo.disconnect();
-				element.__caogl_mo = null;
-			}
-			_observedElements.splice(i, 1);
-		}
-	}
-	
-	/**
-	 * Change the color of the given video title element depending on the rate of the given videoId.
-	 * @param {HTMLElement} videoTitleEl 
-	 * @param {String} videoId 
-	 */
-	function changeVideoTitleColor(videoTitleEl, videoId) {
-		let rating = _ratingByVideoId.get(videoId);
-		if (rating == null || rating == "") {
-			//.. This video is not rated.
-			//.. Maybe this element represented before a video I liked for example, so its color is "reset".
-			videoTitleEl.style.color = "";
-		} else {
-			if (rating == "like")
-				videoTitleEl.style.color = "green";
-			else if (rating == "dislike")
-				videoTitleEl.style.color = "red";
-			else if (rating == "none")
-				videoTitleEl.style.color = "yellow";
-		}
+		//.. When the page is loaded for the fist time,
+		//.. the Observer script is loaded after this current script (the rated videos script).
+		//.. When this current script is loaded, it sends a message to the background to get the rated videos,
+		//.. and when processing the response, the Observer script should not be loaded yet.
+		//.. There is no need to wait for it to be loaded, because when it does,
+		//.. it get all the #video-title elements and process them.
 	}
 	
 	/**
@@ -313,6 +175,29 @@ const caoglRatingVideo = (function () {
 	getRatedVideosFromBackground();
 	
 	return {
+		/**
+		 * Change the color of the given video title element depending on the rate of the given videoId.
+		 * @param {HTMLElement} videoTitleEl 
+		 * @param {String} videoId 
+		 */
+		changeVideoTitleColor(videoTitleEl, videoId) {
+			let color = "";
+			let rating = _ratingByVideoId.get(videoId);
+			if (rating == null || rating == "") {
+				//.. This video is not rated.
+				//.. Maybe this element represented before a video I liked for example, so its color is "reset".
+			} else {
+				if (rating == "like")
+					color = "green";
+				else if (rating == "dislike")
+					color = "red";
+				else if (rating == "none")
+					color = "yellow";
+			}
+			videoTitleEl.style.color = color;
+			return color;
+		},
+	
 		/**
 		 * Handler for the given request if it's made on an url looking like: https://www.youtube.com/youtubei/v1/like/...
 		 * @param {Request} input 

@@ -24,12 +24,15 @@
 	})();
 	
 	/**
-	 * Inject the script showing the videos I liked by changing the color of their title.
+	 * Inject the scripts:
+	 * - observing the changes in the DOM (specially the adds and changes of the #video-title elements)
+	 * - changing the color of the title of the videos based on their rating
+	 * - filtering videos
 	 */
-	function injectRatingScript() {
-		//.. Listen the messages sent by the injected script asking the background the list of the rated videos.
+	function injectScripts() {
+		//.. Listen the messages sent by the RatingVideo injected script asking the background the list of the rated videos.
 		//.. Note: This event can't be listen to in the "onload" event of the script,
-		//.. because the injected script will send this message before the "onload" event will fire.
+		//.. because once injected it will send this message before the "onload" event will fire.
 		window.addEventListener("caoglGetRatedVideosCS", function (customEvent) {
 			if (customEvent.detail == null || customEvent.detail.action == null || customEvent.detail.action != "getRatedVideos")
 				return;
@@ -47,10 +50,8 @@
 			});
 		});
 		
-		let scriptEl = document.createElement("script");
-		scriptEl.id = "caogl-rated-video";
-		scriptEl.src = chrome.extension.getURL("/sites/Youtube/youtube-is-rated-videos.js");
-		scriptEl.onload = function () {
+		let ratedVideosScriptEl = createScriptElement("/sites/Youtube/youtube-is-rated-videos.js", "caogl-rated-video");
+		ratedVideosScriptEl.onload = function () {
 			//.. Listen the messages sent by the injected script asking the background to save the details of videos I just liked or disliked.
 			window.addEventListener("caoglSetRatedVideoCS", function (customEvent) {
 				if (customEvent.detail == null || customEvent.detail.action == null || customEvent.detail.action != "setRatedVideo")
@@ -60,12 +61,33 @@
 					window.dispatchEvent(ce);
 				});
 			});
-		}
-		document.body.appendChild(scriptEl);
+			
+			let filterScriptEl = createScriptElement("/sites/Youtube/youtube-is-filter.js", "caogl-filter");
+			filterScriptEl.onload = function () {
+				//.. Now that the 2 scripts depending of the changes in the DOM are loaded,
+				//.. the body can be observed via a MutationObserver.
+				let observerScriptEl = createScriptElement("/sites/Youtube/youtube-is-observer.js", "caogl-observer");
+				document.body.appendChild(observerScriptEl);
+			};
+			document.body.appendChild(filterScriptEl);
+		};
+		document.body.appendChild(ratedVideosScriptEl);
+	}
+	
+	/**
+	 * 
+	 * @param {String} jsFilePath 
+	 * @param {String} id 
+	 */
+	function createScriptElement(jsFilePath, id) {
+		let scriptEl = document.createElement("script");
+		scriptEl.id = id;
+		scriptEl.src = chrome.extension.getURL(jsFilePath);
+		return scriptEl;
 	}
 	
 	if (document.readyState == "loading")
-		window.addEventListener("DOMContentLoaded", injectRatingScript);
+		window.addEventListener("DOMContentLoaded", injectScripts);
 	else
-		injectRatingScript();
+		injectScripts();
 })();
