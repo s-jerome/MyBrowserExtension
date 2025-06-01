@@ -84,3 +84,8 @@ function openTab(url, fromTab) {
 		chrome.tabs.create({ active: false, url: url, index: index, openerTabId: fromTab.id, windowId: fromTab.windowId });
 	});
 }
+
+(async function init() {
+	await Config.read();
+	Youtube.getAllRatedVideosAsync();
+})();

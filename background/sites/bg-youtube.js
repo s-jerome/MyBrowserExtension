@@ -18,59 +18,59 @@ const Youtube = (function () {
 	/** @type {Map<String, RatingData>} */
 	let _ratingByVideoId = new Map();
 	
-	/**
-	 * Send a request to my localhost to select, from my SQLite database, all the Youtube videos I rated.
-	 */
-	async function requestRatedVideosAsync() {
-		let response = null;
-		try {
-			response = await fetch("http://localhost:8888/youtube/rating/get-rated-videos");
-		} catch (e) {
-			if (ex.message != null) //.. TypeError
-				console.error(new Date().toLocaleString() + " -- [Youtube][requestRatedVideosAsync] Fetch error: " + ex.message);
-			else
-				console.error(new Date().toLocaleString() + " -- [Youtube][requestRatedVideosAsync] Fetch error: " + ex);
-			return;
-		}
-		
-		if (response.ok == false) {
-			console.error(new Date().toLocaleString() + " -- [Youtube][requestRatedVideosAsync] Request failed: " + response.status + " - " + response.statusText);
-			return;
-		}
-		
-		try {
-			let data = await response.json();
-			if (Array.isArray(data)) {
-				let now = Date.now();
-				for (let i = 0; i < data.length; i++) {
-					let savedData = data[i];
-					let cachedRating = _ratingByVideoId.get(savedData.videoId);
-					if (cachedRating == null) {
-						_ratingByVideoId.set(savedData.videoId, new RatingData(now, savedData.rating));
-					} else {
-						if (cachedRating.rating != savedData.rating) {
-							//.. Should only happen if I have changed manually the rating directly in the database.
-							cachedRating.rating = savedData.rating;
-							cachedRating.ratedTime = now;
-							//.. In order to have the rated videos in chronological order,
-							//.. I remove it from the list, and add it again at the end.
-							_ratingByVideoId.delete(savedData.videoId);
-							_ratingByVideoId.set(savedData.videoId, cachedRating);
+	return {
+		/**
+		 * Send a request to my localhost to select, from my SQLite database, all the Youtube videos I rated.
+		 */
+		async getAllRatedVideosAsync() {
+			let port = Config.get("localhostPort");
+			let url = "http://localhost:" + port + "/youtube/rating/get-rated-videos";
+			let response = null;
+			try {
+				response = await fetch(url);
+			} catch (ex) {
+				if (ex.message != null)
+					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Fetch error: " + ex.message);
+				else
+					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Fetch error: " + ex);
+				return;
+			}
+			
+			if (response.ok == false) {
+				console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Request failed: " + response.status + " -- " + response.statusText);
+				return;
+			}
+			
+			try {
+				let data = await response.json();
+				if (Array.isArray(data)) {
+					let now = Date.now();
+					for (let i = 0; i < data.length; i++) {
+						let savedData = data[i];
+						let cachedRating = _ratingByVideoId.get(savedData.videoId);
+						if (cachedRating == null) {
+							_ratingByVideoId.set(savedData.videoId, new RatingData(now, savedData.rating));
+						} else {
+							if (cachedRating.rating != savedData.rating) {
+								//.. Should only happen if I have changed manually the rating directly in the database.
+								cachedRating.rating = savedData.rating;
+								cachedRating.ratedTime = now;
+								//.. In order to have the rated videos in chronological order,
+								//.. I remove it from the list, and add it again at the end.
+								_ratingByVideoId.delete(savedData.videoId);
+								_ratingByVideoId.set(savedData.videoId, cachedRating);
+							}
 						}
 					}
 				}
+			} catch (ex) {
+				if (ex.message != null) //.. TypeError
+					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Can't get the JSON response: " + ex.message);
+				else
+					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Can't get the JSON response: " + ex);
 			}
-		} catch (ex) {
-			if (ex.message != null) //.. TypeError
-				console.error(new Date().toLocaleString() + " -- [Youtube][requestRatedVideosAsync] Can't get the JSON response: " + ex.message);
-			else
-				console.error(new Date().toLocaleString() + " -- [Youtube][requestRatedVideosAsync] Can't get the JSON response: " + ex);
-		}
-	}
-	
-	requestRatedVideosAsync();
-	
-	return {
+		},
+		
 		/**
 		 * Get the videos I liked or disliked since the last sync.
 		 * @param {Number} lastSyncTime 
@@ -117,9 +117,11 @@ const Youtube = (function () {
 			};
 			let body = JSON.stringify(data);
 			
+			let port = Config.get("localhostPort");
+			let url = "http://localhost:" + port + "/youtube/rating/set-video-rating";
 			let response = null;
 			try {
-				response = await fetch("http://localhost:8888/youtube/rating/set-video-rating", {
+				response = await fetch(url, {
 					method: "POST",
 					body: body
 				});
@@ -140,10 +142,6 @@ const Youtube = (function () {
 			_ratingByVideoId.delete(videoDetails.videoId);
 			_ratingByVideoId.set(videoDetails.videoId, new RatingData(Date.now(), rating));
 			return { success: true };
-		},
-		
-		__debug_requestAllRatedVideosAsync() {
-			requestRatedVideosAsync();
 		}
 	}
 })();

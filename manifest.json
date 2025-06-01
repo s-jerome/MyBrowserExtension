@@ -13,7 +13,7 @@
 	
 	"background":
 	{
-		"scripts": [ "/background/context-menu.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", "/background/background.js" ],
+		"scripts": [ "/background/bg-config.js", "/background/context-menu.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", "/background/background.js" ],
 		"persistent": true
 	},
 	
