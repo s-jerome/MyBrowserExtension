@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "4.0.0",
+	"version": "4.1.0",
 	
 	"browser_action":
 	{
@@ -41,6 +41,14 @@
 			"match_about_blank": false,
 			"matches": [ "https://*.netflix.com/*" ],
 			"run_at": "document_start"
+		},
+		
+		{
+			"all_frames": false,
+			"js": [ "/sites/news.google/news.google.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://news.google.com/*" ],
+			"run_at": "document_end"
 		},
 		
 		{

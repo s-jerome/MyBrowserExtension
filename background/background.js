@@ -39,6 +39,13 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			if (message.action == "openTab") {
 				openTab(message.url, sender.tab);
 			}
+		} else if (message.site == "news.google") {
+			if (message.action == "getOpenTabs") {
+				chrome.tabs.query({}, function (tabs) {
+					sendResponse(tabs);
+				});
+				return true;
+			}
 		} else if (message.site == "Twitter") {
 			if (message.action == "getMarkedTweets") {
 				let markedTweets = Twitter.getMarkedTweets(message.lastSyncISO);
