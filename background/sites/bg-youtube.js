@@ -127,7 +127,7 @@ const Youtube = (function () {
 				});
 			} catch (ex) {
 				console.error(new Date().toLocaleString() + " -- [bg-Youtube][setRatedVideoAsync] " + ex.message);
-				return { success: false, error: ex };
+				return { success: false, error: ex.message };
 			}
 			
 			if (response.ok == false) {
