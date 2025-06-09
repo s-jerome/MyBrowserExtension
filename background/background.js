@@ -39,6 +39,13 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			if (message.action == "openTab") {
 				openTab(message.url, sender.tab);
 			}
+		} else if (message.site == "Netflix") {
+			if (message.action == "saveVideoData") {
+				Netflix.saveVideoDataAsync(message.operation, message.reason, message.videoData).then(function (result) {
+					sendResponse(result);
+				});
+				return true;
+			}
 		} else if (message.site == "news.google") {
 			if (message.action == "getOpenTabs") {
 				chrome.tabs.query({}, function (tabs) {

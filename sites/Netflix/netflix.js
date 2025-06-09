@@ -50,12 +50,30 @@
 		await injectScript("/sites/Netflix/netflix-is-seek.js");
 	}
 	
+	/**
+	 * Inject the script saving the video I add/remove from my playlist into a local database.
+	 */
+	async function injectPlaylistScript() {
+		//.. Create a hidden input to store the id of the extension,
+		//.. so that the injected script can fetch the playlist modal files.
+		let hiddenInputEl = document.createElement("input");
+		hiddenInputEl.id = "caogl-extension-id";
+		hiddenInputEl.hidden = true;
+		hiddenInputEl.setAttribute("extension-id", chrome.runtime.id);
+		document.body.appendChild(hiddenInputEl);
+		
+		await injectScript("/sites/Netflix/playlist/netflix-is-playlist.js");
+	}
+	
 	function sendMessageToSeekScript(detail) {
 		let event = new CustomEvent("caoglSeekIS", { detail: detail });
 		window.dispatchEvent(event);
 	}
 	
 	async function init() {
+		//.. Inject this script first because it has to intercept fetch requests.
+		await injectPlaylistScript();
+		
 		injectCSS();
 		
 		await injectElapsedTimeScript();
@@ -84,6 +102,18 @@
 				window.addEventListener("caoglSeekCS", handleMessageFromSeekScript);
 				sendMessageToSeekScript(message);
 				return true; //.. async.
+			}
+		});
+		
+		window.addEventListener("caoglPlaylistCS", function (customEvent) {
+			if (customEvent.detail == null || customEvent.detail.action == null)
+				return;
+			
+			if (customEvent.detail.action == "saveVideoData") {
+				chrome.runtime.sendMessage(customEvent.detail, function (response) {
+					let event = new CustomEvent("caoglPlaylistIS", { detail: response });
+					window.dispatchEvent(event);
+				});
 			}
 		});
 	}

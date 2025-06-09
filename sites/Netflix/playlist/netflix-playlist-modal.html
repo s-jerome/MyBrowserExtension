@@ -1,0 +1,94 @@
+<style>
+	:root {
+		--caogl-playlist-bg-color: #181818; /* Same color as Netflix */
+		--caogl-palylist-separator-line: 1px solid #e50914;
+	}
+	
+	#caogl-playlist-container {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100vh;
+		z-index: 10000;
+		background-color: #18181881;
+	}
+	
+	#caogl-playlist-modal {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		
+		font-family: 'Verdana';
+		width: 440px;
+		height: 422px;
+		margin: auto;
+		background-color: var(--caogl-playlist-bg-color);
+		box-shadow: #e50914 0px 3px 10px; /* Same as a movie dialog, but the color is the red of the NETFLIX logo */
+		
+		display: flex;
+		flex-direction: column;
+	}
+	
+	#caogl-playlist-modal * {
+		box-sizing: border-box;
+	}
+	
+	#caogl-playlist-modal h2 {
+		margin: 0;
+		padding: 20px;
+		border-bottom: var(--caogl-palylist-separator-line);
+		text-align: center;
+		color: white;
+	}
+	
+	#caogl-playlist-modal #reason {
+		flex: 1;
+		resize: none;
+		
+		background-color: var(--caogl-playlist-bg-color);
+		margin: 15px;
+		padding: 10px;
+		color: white;
+		font-size: 16px;
+	}
+	
+	#caogl-playlist-modal .buttons-container {
+		display: flex;
+		justify-content: space-evenly;
+		align-items: center;
+		margin: 0;
+		padding: 20px;
+		border-top: var(--caogl-palylist-separator-line);
+	}
+	
+	#caogl-playlist-modal button {
+		/* Some CSS rules from the "play" button */
+		border-radius: 4px;
+		border: 0;
+		width: 120px;
+		background-color: white;
+		color: black;
+		height: 42px;
+		font-size: 1.6rem;
+		font-weight: 500;
+		cursor: pointer;
+	}
+	#caogl-playlist-modal button:disabled {
+		background-color: gray;
+		cursor: default;
+		font-style: italic;
+	}
+	#caogl-playlist-modal button:not(:disabled):hover {
+		background-color: rgb(230, 230, 230);
+	}
+</style>
+<div id="caogl-playlist-modal">
+	<h2>{{ operation }} of<br>{{ title }}</h2>
+	<textarea id="reason"></textarea>
+	<div class="buttons-container">
+		<button id="save">Save</button>
+		<button id="cancel">Cancel</button>
+	</div>
+</div>

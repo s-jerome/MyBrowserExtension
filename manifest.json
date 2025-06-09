@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "4.1.0",
+	"version": "4.2.0",
 	
 	"browser_action":
 	{
@@ -13,7 +13,12 @@
 	
 	"background":
 	{
-		"scripts": [ "/background/bg-config.js", "/background/context-menu.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", "/background/background.js" ],
+		"scripts":
+		[ 
+			"/background/bg-config.js", "/background/context-menu.js", 
+			"/background/sites/bg-netflix.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", 
+			"/background/background.js"
+		],
 		"persistent": true
 	},
 	
@@ -89,6 +94,9 @@
 		"/sites/Netflix/netflix-is.js",
 		"/sites/Netflix/netflix-is-elapsed-time.js",
 		"/sites/Netflix/netflix-is-seek.js",
+		"/sites/Netflix/playlist/netflix-playlist-modal.html",
+		"/sites/Netflix/playlist/netflix-playlist-modal.js",
+		"/sites/Netflix/playlist/netflix-is-playlist.js",
 		
 		"/sites/tv.orange.fr/tv.orange.fr.css",
 		
