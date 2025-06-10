@@ -1,6 +1,8 @@
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 	if (message.feature != null) {
-		if (message.feature == "VideoSleep") {
+		if (message.feature == "GoBack") {
+			GoBack.goBack();
+		} else if (message.feature == "VideoSleep") {
 			if (message.action == "getData") {
 				message.videoSleepData = window.videoSleepData;
 				sendResponse(message);

@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "4.2.0",
+	"version": "4.3.0",
 	
 	"browser_action":
 	{
@@ -17,13 +17,22 @@
 		[ 
 			"/background/bg-config.js", "/background/context-menu.js", 
 			"/background/sites/bg-netflix.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", 
-			"/background/background.js"
+			"/background/background.js",
+			"/background/features/GoBack/bg-go-back.js"
 		],
 		"persistent": true
 	},
 	
 	"content_scripts":
 	[
+		{
+			"all_frames": false,
+			"js": [ "/features/GoBack/go-back.js" ],
+			"match_about_blank": false,
+			"matches": [ "<all_urls>" ],
+			"run_at": "document_end"
+		},
+		
 		{
 			"all_frames": false,
 			"js": [ "/sites/Instagram/instagram.js" ],
