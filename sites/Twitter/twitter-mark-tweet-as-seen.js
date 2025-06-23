@@ -190,7 +190,7 @@
 		if (_markedTweetIds.has(anchor.__caogl_tweetId) == false) {
 			_markedTweetIds.add(anchor.__caogl_tweetId);
 			//.. When a tweet is marked, its id is sent to the background where all the marked tweets on all pages are centralised;
-			chrome.runtime.sendMessage({ site: "Twitter", action: "markTweet", tweetId: anchor.__caogl_tweetId }, function (response) {
+			chrome.runtime.sendMessage({ site: "Twitter", action: "markTweet", tweetId: anchor.__caogl_tweetId, tweetUrl: anchor.href }, function (response) {
 				//.. The background color changes only if a response is received from the background,
 				//.. so I know it worked.
 				anchor.__caogl_article.style.backgroundColor = _config.backgroundColor;

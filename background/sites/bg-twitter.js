@@ -1,5 +1,21 @@
 const Twitter = (function () {
-	/** @type {Map<String, Date>} */
+	class MarkedTweet {
+		/** @type {String} */
+		markedAt;
+		/** @type {String} */
+		tweetUrl;
+		
+		/**
+		 * @param {String} markedAt 
+		 * @param {String} tweetUrl 
+		 */
+		constructor(markedAt, tweetUrl) {
+			this.markedAt = markedAt;
+			this.tweetUrl = tweetUrl;
+		}
+	}
+	
+	/** @type {Map<String, MarkedTweet>} */
 	let _markedTweets = new Map();
 	
 	/**
@@ -23,11 +39,11 @@ const Twitter = (function () {
 		let needToSave = false;
 		let itemValue = localStorage.getItem("MarkedTweets");
 		if (itemValue != null && itemValue != "") {
-			/** @type {Array<String>} */
-			let markedTweets = JSON.parse(itemValue);
-			for (let tweetIndex = 0; tweetIndex < markedTweets.length; tweetIndex++) {
-				let [tweetId, date] = markedTweets[tweetIndex];
-				if (date < fiveDaysAgo) {
+			/** @type {[string, MarkedTweet][]} */
+			let savedMarkedTweets = JSON.parse(itemValue);
+			for (let tweetIndex = 0; tweetIndex < savedMarkedTweets.length; tweetIndex++) {
+				let [tweetId, savedMarkedTweet] = savedMarkedTweets[tweetIndex];
+				if (savedMarkedTweet.markedAt < fiveDaysAgo) {
 					//.. The tweets marked at least 5 days ago are removed.
 					needToSave = true;
 					continue;
@@ -35,7 +51,7 @@ const Twitter = (function () {
 				let contains = _markedTweets.has(tweetId);
 				if (contains)
 					continue;
-				_markedTweets.set(tweetId, date);
+				setMarkedTweet(tweetId, savedMarkedTweet.markedAt, savedMarkedTweet.tweetUrl);
 			}
 		}
 		
@@ -44,6 +60,16 @@ const Twitter = (function () {
 		
 		_lastMarkedTweetISO = now.toISOString();
 	})();
+	
+	/**
+	 * @param {String} tweetId 
+	 * @param {String} markedAt 
+	 * @param {String} tweetUrl 
+	 */
+	function setMarkedTweet(tweetId, markedAt, tweetUrl) {
+		let markedTweet = new MarkedTweet(markedAt, tweetUrl);
+		_markedTweets.set(tweetId, markedTweet);
+	}
 	
 	function saveMarkedTweetsToLocalStorage() {
 		let array = Array.from(_markedTweets.entries());
@@ -63,15 +89,15 @@ const Twitter = (function () {
 	
 	return {
 		/**
-		 * 
-		 * @param {String} markedTweetId 
+		 * @param {String} tweetId 
+		 * @param {String} tweetUrl 
 		 */
-		addMarkedTweet: function (markedTweetId) {
-			let contains = _markedTweets.has(markedTweetId);
+		addMarkedTweet(tweetId, tweetUrl) {
+			let contains = _markedTweets.has(tweetId);
 			if (contains)
 				return;
 			_lastMarkedTweetISO = new Date().toISOString();
-			_markedTweets.set(markedTweetId, _lastMarkedTweetISO);
+			setMarkedTweet(tweetId, _lastMarkedTweetISO, tweetUrl);
 			createSaveTimeout();
 		},
 		
@@ -80,7 +106,7 @@ const Twitter = (function () {
 		 * @param {String} lastSyncISO 
 		 * @returns 
 		 */
-		getMarkedTweets: function (lastSyncISO) {
+		getMarkedTweets(lastSyncISO) {
 			let markedTweets = [];
 			
 			if (lastSyncISO != null && lastSyncISO != "" && lastSyncISO >= _lastMarkedTweetISO) {
@@ -95,8 +121,8 @@ const Twitter = (function () {
 				//.. Only the new marked tweets since the last sync are returned.
 				let entries = Array.from(_markedTweets.entries());
 				for (let i = entries.length - 1; i >= 0; i--) {
-					let [tweetId, date] = entries[i];
-					if (date < lastSyncISO)
+					let [tweetId, markedTweet] = entries[i];
+					if (markedTweet.markedAt < lastSyncISO)
 						break;
 					markedTweets.push(tweetId);
 				}

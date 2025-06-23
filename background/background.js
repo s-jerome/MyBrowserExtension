@@ -60,7 +60,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 				let markedTweets = Twitter.getMarkedTweets(message.lastSyncISO);
 				sendResponse(markedTweets);
 			} else if (message.action == "markTweet") {
-				Twitter.addMarkedTweet(message.tweetId);
+				Twitter.addMarkedTweet(message.tweetId, message.tweetUrl);
 				//.. Send a response so that the content script knows it worked.
 				sendResponse(message);
 			} else if (message.action == "openTab") {
