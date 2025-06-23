@@ -14,10 +14,13 @@
 	const REGEX_TWEETDETAIL_URL = new RegExp(/\/TweetDetail\??/);
 	
 	/**
-	 * The regex used to know if a url is the "HomeLatestTimeline" one (looking like: https://x.com/i/api/graphql/<letters-and-numbers>/HomeLatestTimeline).
+	 * The regex used to know if a url is the "HomeLatestTimeline" or "HomeTimeline" one.
 	 * This request is made on the homepage.
+	 * The "HomeLatestTimeline" is made in the "Following" ("Abonnements") tab and looks like: https://x.com/i/api/graphql/<letters-and-numbers>/HomeLatestTimeline
+	 * (and can have "?variables=...").
+	 * The "HomeTimeline" is made in the "For you" ("Pour vous") tab and looks like: https://x.com/i/api/graphql/<letters-and-numbers>/HomeTimeline
 	 */
-	const REGEX_HOMELATESTTIMELINE_URL = new RegExp(/\/HomeLatestTimeline\??/);
+	const REGEX_HOMELATESTTIMELINE_URL = new RegExp(/\/(?:HomeLatestTimeline|HomeTimeline)(?:\?|$|\/)/);
 	
 	const _xpo = XMLHttpRequest.prototype.open;
 	
