@@ -24,9 +24,11 @@
 	})();
 	
 	/**
-	 * Regex used to get the id of a tweet, placed at the end of the url.
+	 * Regex used to get the id of a tweet, placed at the end of the url (https://x.com/<account>/status/<tweetId>).
+	 * 
+	 * Note: it's important to add "/status/" in the regex to ignore urls looking like: "https://x.com/i/communities/<tweetId>"
 	 */
-	const REGEX_TWEET_ID = new RegExp(/\/(?<tweetId>\d{10,})$/);
+	const REGEX_TWEET_ID = new RegExp(/\/status\/(?<tweetId>\d{10,})$/);
 	
 	/** 
 	 * The last time the marked tweets were sync with the background, in ISO format.
