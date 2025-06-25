@@ -100,6 +100,23 @@ const Twitter = (function () {
 		}, 10000);
 	}
 	
+	/**
+	 * Create functions that I can call manually from the console.
+	 */
+	(function createConsoleFunctions() {
+		window.TwitterConsole = {
+			clearMarkedTweets() {
+				_markedTweets.clear();
+				saveMarkedTweetsToLocalStorage();
+				//.. TODO: send a message to all the Twitter tabs so that the marked tweets don't appear as marked anymore?
+			},
+			
+			saveMarkedTweetsToLocalStorage() {
+				saveMarkedTweetsToLocalStorage();
+			}
+		};
+	})();
+	
 	return {
 		readSavedMarkedTweets() {
 			_lastMarkedTweetISO = new Date().toISOString();
@@ -174,22 +191,6 @@ const Twitter = (function () {
 			}
 			
 			return markedTweets;
-		},
-		
-		/**
-		 * For debug purpose.
-		 */
-		clearMarkedTweets() {
-			_markedTweets.clear();
-			saveMarkedTweetsToLocalStorage();
-			//.. TODO: send a message to all the Twitter tabs so that the marked tweets don't appear as marked anymore?
-		},
-		
-		/**
-		 * For debug purpose.
-		 */
-		save() {
-			saveMarkedTweetsToLocalStorage();
 		}
 	}
 })();
