@@ -32,34 +32,47 @@ const Twitter = (function () {
 	 */
 	let _saveTimeout = null;
 	
-	(function getMarkedTweetsFromLocalStorage() {
-		let now = new Date();
-		let today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
-		let fiveDaysAgo = new Date(today.setDate(today.getDate() - 5)).toISOString();
-		let needToSave = false;
-		let itemValue = localStorage.getItem("MarkedTweets");
-		if (itemValue != null && itemValue != "") {
-			/** @type {[string, MarkedTweet][]} */
-			let savedMarkedTweets = JSON.parse(itemValue);
-			for (let tweetIndex = 0; tweetIndex < savedMarkedTweets.length; tweetIndex++) {
-				let [tweetId, savedMarkedTweet] = savedMarkedTweets[tweetIndex];
-				if (savedMarkedTweet.markedAt < fiveDaysAgo) {
-					//.. The tweets marked at least 5 days ago are removed.
-					needToSave = true;
-					continue;
-				}
-				let contains = _markedTweets.has(tweetId);
-				if (contains)
-					continue;
-				setMarkedTweet(tweetId, savedMarkedTweet.markedAt, savedMarkedTweet.tweetUrl);
+	/**
+	 * Among the given tweets, keep only those marked in the most recent x days.
+	 * 
+	 * Note: The goal is not to keep the tweets marked in the last x days starting from today,
+	 * I want to keep those marked in the most recent x days, with the starting date being the most recent date a tweet was marked.
+	 * So if I want to keep only the tweets marked in the most recent 7 days, and I didn't mark any tweet since 10 days ago,
+	 * the 7 days start from 10 days ago, so I keep the tweets marked between 10 and 17 days ago.
+	 * @param {Map<String, Array<{tweetId: String, markedAt: String, tweetUrl: String}>>} markedTweetsByDate 
+	 */
+	function keepMostRecentTweets(markedTweetsByDate) {
+		let mostRecentDays = Config.getNumber("Twitter.markedTweets.mostRecentDays", 7);
+		let dates = Array.from(markedTweetsByDate.keys());
+		let tooManyDates = dates.length > mostRecentDays;
+		if (tooManyDates) {
+			//.. Sort by chronological order DESC.
+			dates.sort((date1, date2) => date2 - date1);
+			// for (let i = dates.length - 1; i >= mostRecentDays; i--) {
+			// 	let date = dates[i];
+			// 	markedTweetsByDate.delete(date);
+			// 	dates.splice(i, 1);
+			// }
+			let datesToDelete = dates.splice(mostRecentDays);
+			datesToDelete.forEach(date => markedTweetsByDate.delete(date));
+			
+			console.log(new Date().toLocaleString() + " -- [Twitter] Deleting tweets marked on: " + datesToDelete.join(", "));
+		}
+		
+		for (let dateIndex = 0; dateIndex < dates.length; dateIndex++) {
+			let date = dates[dateIndex];
+			let tweetsData = markedTweetsByDate.get(date);
+			if (tweetsData == null)
+				continue;
+			for (let tweetIndex = 0; tweetIndex < tweetsData.length; tweetIndex++) {
+				let tweetData = tweetsData[tweetIndex];
+				setMarkedTweet(tweetData.tweetId, tweetData.markedAt, tweetData.tweetUrl);
 			}
 		}
 		
-		if (needToSave)
+		if (tooManyDates)
 			saveMarkedTweetsToLocalStorage();
-		
-		_lastMarkedTweetISO = now.toISOString();
-	})();
+	}
 	
 	/**
 	 * @param {String} tweetId 
@@ -88,6 +101,38 @@ const Twitter = (function () {
 	}
 	
 	return {
+		readSavedMarkedTweets() {
+			_lastMarkedTweetISO = new Date().toISOString();
+			
+			let itemValue = localStorage.getItem("MarkedTweets");
+			if (itemValue == null || itemValue == "")
+				return;
+			
+			//.. The marked tweets are stored by date,
+			//.. to keep only those marked in the most recent x days.
+			let regexDate = new RegExp(/(?<date>\d{4}-\d{2}-\d{2})/);
+			/** @type {Map<String, Array<{tweetId: String, markedAt: String, tweetUrl: String}>>} */
+			let markedTweetsByDate = new Map();
+			
+			/** @type {[string, MarkedTweet][]} */
+			let savedMarkedTweets = JSON.parse(itemValue);
+			for (let tweetIndex = 0; tweetIndex < savedMarkedTweets.length; tweetIndex++) {
+				let [tweetId, savedMarkedTweet] = savedMarkedTweets[tweetIndex];
+				let match = savedMarkedTweet.markedAt.match(regexDate);
+				if (match == null)
+					continue;
+				let markedAtDate = match.groups["date"];
+				let markedTweets = markedTweetsByDate.get(markedAtDate);
+				if (markedTweets == null) {
+					markedTweets = [];
+					markedTweetsByDate.set(markedAtDate, markedTweets);
+				}
+				markedTweets.push({ tweetId: tweetId, markedAt: savedMarkedTweet.markedAt, tweetUrl: savedMarkedTweet.tweetUrl });
+			}
+			
+			keepMostRecentTweets(markedTweetsByDate);
+		},
+		
 		/**
 		 * @param {String} tweetId 
 		 * @param {String} tweetUrl 

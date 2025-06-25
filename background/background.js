@@ -103,5 +103,6 @@ function openTab(url, fromTab) {
 
 (async function init() {
 	await Config.read();
+	Twitter.readSavedMarkedTweets();
 	Youtube.getAllRatedVideosAsync();
 })();

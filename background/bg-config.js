@@ -8,10 +8,8 @@ const Config = (function () {
 			let url = chrome.runtime.getURL("/config.json");
 			let response = await fetch(url);
 			let data = await response.json();
-			for (let propertyName in _config) {
+			for (let propertyName in data) {
 				let propertyValue = data[propertyName];
-				if (propertyValue == null)
-					continue;
 				_config[propertyName] = propertyValue;
 			}
 		},
@@ -25,6 +23,21 @@ const Config = (function () {
 			if (value == null)
 				value = "";
 			return value;
+		},
+		
+		/**
+		 * Get the number config value for the given key.
+		 * If there is no value, or it's not a number, the given default value is returned.
+		 * @param {String} key 
+		 * @param {Number} defaultValue 
+		 */
+		getNumber(key, defaultValue) {
+			let value = this.get(key);
+			let number = parseInt(value);
+			if (isNaN(number) == false)
+				return number;
+			else
+				return defaultValue;
 		}
 	}
 })();

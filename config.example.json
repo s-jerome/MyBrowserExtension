@@ -1,3 +1,4 @@
 {
-	"localhostPort": "8801"
+	"localhostPort": "8801",
+	"Twitter.markedTweets.mostRecentDays": 7
 }
