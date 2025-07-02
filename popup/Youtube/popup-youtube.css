@@ -1,0 +1,43 @@
+body {
+	margin: 8px;
+}
+
+span {
+	display: block;
+}
+
+#title {
+	margin: 15px 0px;
+}
+
+#url {
+	margin: 10px 0px;
+}
+
+#adaptive-formats {
+	margin: 20px 0px;
+}
+
+.download-video-stream-container {
+	display: flex;
+	align-items: center;
+}
+
+.action-buttons {
+	display: flex;
+	justify-content: space-evenly;
+	margin: 0 auto;
+	width: 75%;
+}
+
+#open-file {
+	display: none;
+}
+
+#video-streams-container, #audio-streams-container, .action-buttons {
+	margin-top: 10px;
+}
+
+.codecs-av01 {
+	font-size: 80%;
+}

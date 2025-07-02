@@ -67,14 +67,33 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 				openTab(message.url, sender.tab);
 			}
 		} else if (message.site == "Youtube") {
-			if (message.action == "getRatedVideos") {
-				let ratedVideos = Youtube.getRatedVideos(message.lastSyncTime);
-				sendResponse(ratedVideos);
-			} else if (message.action == "setRatedVideo") {
-				Youtube.setRatedVideoAsync(message.videoDetails, message.rating).then(function (result) {
-					sendResponse(result);
-				});
-				return true;
+			if (message.domain == "download") {
+				if (message.action == "download") {
+					YoutubeDownload.downloadAsync(message.videoId, message.audioUrl, message.audioContentLength, message.videoUrl, message.videoContentLength).then(function (response) {
+						sendResponse(response);
+					});
+					return true;
+				} else if (message.action == "getVideoData") {
+					YoutubeDownload.getVideoDataAsync(message.videoId, message.visitorData).then(function (response) {
+						sendResponse(response);
+					});
+					return true;
+				} else if (message.action == "openFile") {
+					YoutubeDownload.openFileAsync(message.videoId).then(function (response) {
+						sendResponse(response);
+					});
+					return true;
+				}
+			} else if (message.domain == "rating") {
+				if (message.action == "getRatedVideos") {
+					let ratedVideos = YoutubeRating.getRatedVideos(message.lastSyncTime);
+					sendResponse(ratedVideos);
+				} else if (message.action == "setRatedVideo") {
+					YoutubeRating.setRatedVideoAsync(message.videoDetails, message.rating).then(function (result) {
+						sendResponse(result);
+					});
+					return true;
+				}
 			}
 		}
 		return;
@@ -104,5 +123,5 @@ function openTab(url, fromTab) {
 (async function init() {
 	await Config.read();
 	Twitter.readSavedMarkedTweets();
-	Youtube.getAllRatedVideosAsync();
+	YoutubeRating.getAllRatedVideosAsync();
 })();

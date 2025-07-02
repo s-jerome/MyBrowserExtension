@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "4.3.0",
+	"version": "1.16.0",
 	
 	"browser_action":
 	{
@@ -16,7 +16,8 @@
 		"scripts":
 		[ 
 			"/background/bg-config.js", "/background/context-menu.js", 
-			"/background/sites/bg-netflix.js", "/background/sites/bg-twitter.js", "/background/sites/bg-youtube.js", 
+			"/background/sites/bg-netflix.js", "/background/sites/bg-twitter.js", 
+			"/background/sites/bg-youtube-download.js", "/background/sites/bg-youtube-rating.js", 
 			"/background/background.js",
 			"/background/features/GoBack/bg-go-back.js"
 		],
@@ -111,6 +112,7 @@
 		
 		"/sites/Twitter/twitter-is-remove-promoted-tweets.js",
 		
+		"/sites/Youtube/youtube-is-download.js",
 		"/sites/Youtube/youtube-is-filter.js",
 		"/sites/Youtube/youtube-is-observer.js",
 		"/sites/Youtube/youtube-is-rated-videos.js",

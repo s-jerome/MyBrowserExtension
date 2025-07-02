@@ -138,7 +138,7 @@ const caoglRatingVideo = (function () {
 		}
 		window.addEventListener("caoglSetRatedVideoIS", handleMessage);
 		
-		let ce = new CustomEvent("caoglSetRatedVideoCS", { detail: { site: "Youtube", action: "setRatedVideo", videoDetails: videoDetails, rating: rating } });
+		let ce = new CustomEvent("caoglSetRatedVideoCS", { detail: { site: "Youtube", domain: "rating", action: "setRatedVideo", videoDetails: videoDetails, rating: rating } });
 		window.dispatchEvent(ce);
 	}
 	
@@ -160,7 +160,7 @@ const caoglRatingVideo = (function () {
 	 * Send a message to the background (through the content script) asking the list of all the rated videos.
 	 */
 	function getRatedVideosFromBackground() {
-		let ce = new CustomEvent("caoglGetRatedVideosCS", { detail: { site: "Youtube", action: "getRatedVideos", lastSyncTime: _lastSyncTime } });
+		let ce = new CustomEvent("caoglGetRatedVideosCS", { detail: { site: "Youtube", domain: "rating", action: "getRatedVideos", lastSyncTime: _lastSyncTime } });
 		window.dispatchEvent(ce);
 	}
 	

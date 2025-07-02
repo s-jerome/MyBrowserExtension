@@ -11,6 +11,20 @@ function injectJS(jsFilePath) {
 	document.body.appendChild(scriptEl);
 }
 
+function injectPage(htmlFilePath, jsFilePath, cssFilePath) {
+	document.body.innerHTML = "";
+	let url = chrome.extension.getURL(htmlFilePath);
+	fetch(url).then(function (response) {
+		response.text().then(function (text) {
+			document.body.innerHTML = text;
+			if (cssFilePath != null && cssFilePath != "")
+				injectCSS(cssFilePath);
+			if (jsFilePath != null && jsFilePath != "")
+				injectJS(jsFilePath);
+		});
+	});
+}
+
 chrome.tabs.getSelected(function (selectedTab) {
 	window.selectedTab = selectedTab;
 	
@@ -21,14 +35,8 @@ chrome.tabs.getSelected(function (selectedTab) {
 		injectCSS("/popup/Netflix/popup-netflix.css");
 		injectJS("/popup/Netflix/popup-netflix.js");
 	} else if (selectedTab.url.indexOf("tv.orange.fr/") >= 0) {
-		document.body.innerHTML = "";
-		let url = chrome.extension.getURL("/popup/tv.orange.fr/tv.orange.fr.html");
-		fetch(url).then(function (response) {
-			response.text().then(function (text) {
-				document.body.innerHTML = text;
-				injectCSS("/popup/tv.orange.fr/tv.orange.fr.css");
-				injectJS("/popup/tv.orange.fr/tv.orange.fr.js");
-			});
-		});
+		injectPage("/popup/tv.orange.fr/tv.orange.fr.html", "/popup/tv.orange.fr/tv.orange.fr.js", "/popup/tv.orange.fr/tv.orange.fr.css");
+	} else if (selectedTab.url.indexOf("youtube.com/watch?v=") >= 0) {
+		injectPage("/popup/Youtube/popup-youtube.html", "/popup/Youtube/popup-youtube.js", "/popup/Youtube/popup-youtube.css");
 	}
 });

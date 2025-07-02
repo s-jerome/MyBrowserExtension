@@ -28,6 +28,7 @@
 	 * - observing the changes in the DOM (specially the adds and changes of the #video-title elements)
 	 * - changing the color of the title of the videos based on their rating
 	 * - filtering videos
+	 * - returning the VISITOR_DATA for the downloading of videos
 	 */
 	function injectScripts() {
 		//.. Listen the messages sent by the RatingVideo injected script asking the background the list of the rated videos.
@@ -72,6 +73,26 @@
 			document.body.appendChild(filterScriptEl);
 		};
 		document.body.appendChild(ratedVideosScriptEl);
+		
+		let downloadVideosScriptEl = createScriptElement("/sites/Youtube/youtube-is-download.js", "caogl-download");
+		downloadVideosScriptEl.onload = function () {
+			chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+				if (message.action == "getVisitorData") {
+					/**
+					 * @param {CustomEvent} customEvent 
+					 */
+					function handleMessage(customEvent) {
+						window.removeEventListener("caoglDownloadVideosCS", handleMessage);
+						sendResponse(customEvent.detail);
+					}
+					window.addEventListener("caoglDownloadVideosCS", handleMessage);
+					let customEvent = new CustomEvent("caoglDownloadVideosIS", { detail: message });
+					window.dispatchEvent(customEvent);
+					return true; //.. async.
+				}
+			});
+		};
+		document.body.appendChild(downloadVideosScriptEl);
 	}
 	
 	/**

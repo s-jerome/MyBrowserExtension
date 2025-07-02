@@ -1,4 +1,4 @@
-const Youtube = (function () {
+const YoutubeRating = (function () {
 	class RatingData {
 		/** @type {Number} */
 		ratedTime;
@@ -30,14 +30,14 @@ const Youtube = (function () {
 				response = await fetch(url);
 			} catch (ex) {
 				if (ex.message != null)
-					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Fetch error: " + ex.message);
+					console.error(new Date().toLocaleString() + " -- [Youtube-rating][getAllRatedVideosAsync] Fetch error: " + ex.message);
 				else
-					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Fetch error: " + ex);
+					console.error(new Date().toLocaleString() + " -- [Youtube-rating][getAllRatedVideosAsync] Fetch error: " + ex);
 				return;
 			}
 			
 			if (response.ok == false) {
-				console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Request failed: " + response.status + " -- " + response.statusText);
+				console.error(new Date().toLocaleString() + " -- [Youtube-rating][getAllRatedVideosAsync] Request failed: " + response.status + " -- " + response.statusText);
 				return;
 			}
 			
@@ -65,9 +65,9 @@ const Youtube = (function () {
 				}
 			} catch (ex) {
 				if (ex.message != null) //.. TypeError
-					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Can't get the JSON response: " + ex.message);
+					console.error(new Date().toLocaleString() + " -- [Youtube-rating][getAllRatedVideosAsync] Can't get the JSON response: " + ex.message);
 				else
-					console.error(new Date().toLocaleString() + " -- [Youtube][getAllRatedVideosAsync] Can't get the JSON response: " + ex);
+					console.error(new Date().toLocaleString() + " -- [Youtube-rating][getAllRatedVideosAsync] Can't get the JSON response: " + ex);
 			}
 		},
 		
@@ -126,13 +126,13 @@ const Youtube = (function () {
 					body: body
 				});
 			} catch (ex) {
-				console.error(new Date().toLocaleString() + " -- [bg-Youtube][setRatedVideoAsync] " + ex.message);
+				console.error(new Date().toLocaleString() + " -- [Youtube-rating][setRatedVideoAsync] " + ex.message);
 				return { success: false, error: ex.message };
 			}
 			
 			if (response.ok == false) {
 				let error = "Request failed: " + response.status + " -- " + response.statusText;
-				console.error(new Date().toLocaleString() + " -- [bg-Youtube][setRatedVideoAsync] " + error);
+				console.error(new Date().toLocaleString() + " -- [Youtube-rating][setRatedVideoAsync] " + error);
 				return { success: false, error: error };
 			}
 			
