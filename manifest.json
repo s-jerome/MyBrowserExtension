@@ -3,7 +3,7 @@
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "1.16.0",
+	"version": "1.17.0",
 	
 	"browser_action":
 	{
@@ -71,6 +71,14 @@
 			"js": [ "/sites/tv.orange.fr/tv.orange.fr.js" ],
 			"match_about_blank": false,
 			"matches": [ "https://tv.orange.fr/*" ],
+			"run_at": "document_end"
+		},
+		
+		{
+			"all_frames": false,
+			"js": [ "/sites/Twitch/twitch-filter.js" ],
+			"match_about_blank": false,
+			"matches": [ "https://www.twitch.tv/*" ],
 			"run_at": "document_end"
 		},
 		
