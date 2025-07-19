@@ -6,13 +6,18 @@ const caoglObserver = (function () {
 	console.log(new Date().toLocaleString() + " -- [Youtube-is-observer] Script started.");
 	
 	/**
+	 * The regex used to get the video id from an anchor href.
+	 */
+	const REGEX_VIDEOID_FROM_URL = new RegExp(/(?:\?|&)v=(?<videoId>.*?)(?:&|$)/);
+	
+	/**
 	 * The video title elements attached to a MutationObserver to observe the changes of their text.
 	 * @type {Array<HTMLElement>}
 	 */
 	let _observedVideoTitleEls = [];
 	
 	/**
-	 * Observe the adding of #video-title elements in the body.
+	 * Observe the adding of video titles in the body.
 	 */
 	(function observeBody() {
 		let mo = new MutationObserver(function (mutations) {
@@ -27,9 +32,12 @@ const caoglObserver = (function () {
 					if (addedNode.id == "caogl-title")
 						continue; //.. It's an element I add in caoglFilter to replace the actual title when the video is filtered.
 					if (addedNode.id == "video-title")
-						processVideoTitleElement(addedNode); //.. Should never happen...
-					else {
-						processVideoTitleElements(addedNode);
+						processVideoTitleElement(addedNode, true); //.. Should never happen...
+					else if (addedNode.tagName == "YT-LOCKUP-VIEW-MODEL" && addedNode.parentElement.id == "contents") {
+						//.. A suggested video on the right.
+						processSuggestedVideo(addedNode);
+					} else {
+						findAndProcessVideoTitleElementsById(addedNode);
 					}
 				}
 				
@@ -60,21 +68,26 @@ const caoglObserver = (function () {
 	 * Find all the #video-title present in the given element and process them.
 	 * @param {HTMLElement} parent 
 	 */
-	function processVideoTitleElements(parent) {
-		//.. It's easy: every videos (in the homepage or in a playlist
-		//.. or on the right as suggested videos, or whatever...) have their title in a #video-title element.
+	function findAndProcessVideoTitleElementsById(parent) {
+		//.. Every videos (in the homepage, in a channel page, in a playlist),
+		//.. except the suggested ones on the right,
+		//.. have their title in a #video-title element.
 		let videoTitleEls = parent.querySelectorAll("#video-title");
 		for (let i = 0; i < videoTitleEls.length; i++) {
 			let videoTitleEl = videoTitleEls[i];
-			processVideoTitleElement(videoTitleEl);
+			processVideoTitleElement(videoTitleEl, true);
 		}
 	}
 	
 	/**
 	 * Process the given video title in different scripts, and observe its text changes.
-	 * @param {HTMLElement} videoTitleEl 
+	 * @param {HTMLElement} videoTitleEl Can be an anchor or a yt-formatted-string
+	 * @param {Boolean} needToObserve Determine if a MutationObserver needs to be attached to the given element.
 	 */
-	function processVideoTitleElement(videoTitleEl) {
+	function processVideoTitleElement(videoTitleEl, needToObserve) {
+		if (needToObserve == null)
+			needToObserve = true;
+		
 		let videoId = getVideoIdFromTitleElement(videoTitleEl);
 		if (videoId == "")
 			return;
@@ -83,14 +96,34 @@ const caoglObserver = (function () {
 			//.. No color, meaning the video is not rated.
 			//.. So let see if it needs to be filtered (because no need to filter a video I have already rated).
 			caoglFilter.filter(videoTitleEl, videoId);
+		} else if (needToObserve == false) {
+			//.. The title changed, and now it's a video I have rated,
+			//.. but maybe the previous video was filtered, so the filter has to be removed.
+			caoglFilter.removeFilter(videoTitleEl);
 		}
-		observeVideoTitleElement(videoTitleEl);
+		if (needToObserve)
+			observeVideoTitleElement(videoTitleEl);
 	}
 	
 	/**
 	 * @param {HTMLElement} videoTitleEl 
 	 */
 	function getVideoIdFromTitleElement(videoTitleEl) {
+		if (videoTitleEl.tagName == "A") {
+			//.. It's either a suggested video on the right, or a video on a playlist,
+			//.. or a video on the "Home" page of a channel.
+			/** @type {HTMLAnchorElement} */
+			let anchor = videoTitleEl;
+			//.. Note: using a regex is at least twice as fast as using the searchParams of a URL instance.
+			let match = anchor.href.match(REGEX_VIDEOID_FROM_URL);
+			if (match != null) {
+				let videoId = match.groups["videoId"];
+				return videoId;
+			}
+		}
+		
+		//.. It should be a yt-formatted-string element,
+		//.. on the homepage, or on the "Videos" page of a channel, or in the search result.
 		if (document.location.href.indexOf("/playlist?list=") < 0) {
 			if (videoTitleEl.__dataHost == null)
 				return "";
@@ -113,19 +146,7 @@ const caoglObserver = (function () {
 			return;
 		
 		let mo = new MutationObserver(function (mutations) {
-			let videoId = getVideoIdFromTitleElement(videoTitleEl);
-			if (videoId == "")
-				return;
-			let color = caoglRatingVideo.changeVideoTitleColor(videoTitleEl, videoId);
-			if (color == "") {
-				//.. No color, meaning the video is not rated.
-				//.. So let see if it needs to be filtered (because no need to filter a video I have already rated).
-				caoglFilter.filter(videoTitleEl, videoId);
-			} else {
-				//.. The title changed, and now it's a video I have rated,
-				//.. but maybe the previous video was filtered, so the filter has to be removed.
-				caoglFilter.removeFilter(videoTitleEl);
-			}
+			processVideoTitleElement(videoTitleEl, false);
 		});
 		mo.observe(videoTitleEl, {
 			attributes: false,
@@ -139,7 +160,23 @@ const caoglObserver = (function () {
 	}
 	
 	/**
-	 * Loop through the observed elements and disconnect their MutationObserve if they were removed from the DOM.
+	 * Find the title of the video in the given element and process it.
+	 * @param {HTMLElement} lockupViewModelEl A yt-lockup-view-model element, representing a suggested video on the right.
+	 */
+	function processSuggestedVideo(lockupViewModelEl) {
+		//.. The suggested videos have no longer a #video-title element since 2025-07.
+		//.. @@Doc: documentation/Youtube/RatedVideos/suggested-videos.html
+		//.. There is multiple children span, but there is only 1 h3.
+		//.. I don't select it because changing its color doesn't work.
+		let spans = lockupViewModelEl.querySelectorAll("h3 > a > span");
+		if (spans.length != 1)
+			return;
+		let anchor = spans[0].parentElement;
+		processVideoTitleElement(anchor, true);
+	}
+	
+	/**
+	 * Loop through the observed elements and disconnect their MutationObserver if they were removed from the DOM.
 	 */
 	function stopObservingRemovedElements() {
 		for (let i = _observedVideoTitleEls.length - 1; i >= 0; i--) {
@@ -156,15 +193,22 @@ const caoglObserver = (function () {
 	}
 	
 	return {
-		/**
-		 * Find all the #video-title present in the body and process them.
-		 */
-		processVideoTitleElements() {
-			processVideoTitleElements(document.body);
+		getObservedVideoTitleElements() {
+			return _observedVideoTitleEls;
 		},
 		
-		__debug_getObservedVideoTitleEls() {
-			return _observedVideoTitleEls;
+		/**
+		 * Loop through the observed video titles and update their state (filtered or rated).
+		 */
+		processVideoTitleElements() {
+			//.. We get here because a video has been rated on a new tab,
+			//.. or because I changed the filter conditions.
+			//.. There is no need to query the body to find the video title elements,
+			//.. I just have to update the ones I already observe.
+			for (let i = 0; i < _observedVideoTitleEls.length; i++) {
+				let el = _observedVideoTitleEls[i];
+				processVideoTitleElement(el);
+			}
 		}
 	}
 })();

@@ -34,22 +34,21 @@ const caoglRatingVideo = (function () {
 		
 		_lastSyncTime = Date.now();
 		
-		refresh();
+		updateVideoTitleElements();
 	});
 	
 	/**
-	 * Ask the Observer script to get all the #video-title elements to refresh them based on their rating.
+	 * Ask the Observer script to update the state of the video titles.
 	 */
-	function refresh() {
-		if (window.caoglObserver != null)
-			caoglObserver.processVideoTitleElements();
-		
+	function updateVideoTitleElements() {	
 		//.. When the page is loaded for the fist time,
 		//.. the Observer script is loaded after this current script (the rated videos script).
 		//.. When this current script is loaded, it sends a message to the background to get the rated videos,
 		//.. and when processing the response, the Observer script should not be loaded yet.
-		//.. There is no need to wait for it to be loaded, because when it does,
-		//.. it get all the #video-title elements and process them.
+		//.. There is no need to wait for it to be loaded, because it will intercept the adding
+		//.. of video titles using its MutationObserver.
+		if (window.caoglObserver != null)
+			caoglObserver.processVideoTitleElements();
 	}
 	
 	/**

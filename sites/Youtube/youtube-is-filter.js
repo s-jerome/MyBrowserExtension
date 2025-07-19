@@ -8,6 +8,11 @@
  * TODO: make a menu to exclude specific videos from being filtered?
  * 
  * TODO: make a popup or a full page to manage the filters? (for now I have to set manually the filters in the localStorage).
+ * 
+ * TODO: if I have 2+ Youtube pages open, and I change the filters in one of them, the other has to update
+ * (in the rating script, I use the visibilitychange to get the rated videos and update the page).
+ * 
+ * TODO: redesign the "__debug" functions.
  */
 const caoglFilter = (function () {
 	console.log(new Date().toLocaleString() + " -- [Youtube-is-filter] Script started.");
@@ -381,6 +386,9 @@ const caoglFilter = (function () {
 	 * @param {HTMLElement} videoTitleEl 
 	 */
 	function getVideoComponentEl(videoTitleEl) {
+		//.. TODO: if it's a suggested video on the right, I already get the video component yt-lockup-view-model
+		//.. Should I code something for this situation to avoid having to loop through the parents ?
+		
 		let parent = videoTitleEl.parentElement;
 		while (true) {
 			if (parent == null)
@@ -388,7 +396,7 @@ const caoglFilter = (function () {
 			if (parent.tagName == "BODY")
 				return null; //.. We go back too far.
 			if (parent.tagName == "YTD-RICH-ITEM-RENDERER" //.. A video on the homepage.
-				|| parent.tagName == "YTD-COMPACT-VIDEO-RENDERER" //.. A suggested video on the right.
+				|| parent.tagName == "YTD-COMPACT-VIDEO-RENDERER" || parent.tagName == "YT-LOCKUP-VIEW-MODEL" //.. A suggested video on the right.
 				|| parent.tagName == "YTD-VIDEO-RENDERER" //.. A result of a search.
 				|| parent.tagName == "YTD-PLAYLIST-VIDEO-RENDERER" //.. A video in a playlist.
 				|| parent.tagName == "YTD-GRID-VIDEO-RENDERER") {
@@ -779,7 +787,7 @@ const caoglFilter = (function () {
 		},
 		
 		/**
-		 * I just changed manually the filters in the localStorage, and want to reload them and refresh the page.
+		 * I just changed manually the filters in the localStorage, and want to reload them and update the page.
 		 */
 		__debug_refresh() {
 			if (window.caoglObserver == null) {
@@ -792,14 +800,14 @@ const caoglFilter = (function () {
 			readSavedFilters();
 			
 			//.. Remove all the filters applied.
-			let videoTitleEls = document.body.querySelectorAll("#video-title");
-			for (let i = 0; i < videoTitleEls.length; i++) {
-				let videoTitleEl = videoTitleEls[i];
+			let observedVideoTitleEls = caoglObserver.getObservedVideoTitleElements();
+			for (let i = 0; i < observedVideoTitleEls.length; i++) {
+				let videoTitleEl = observedVideoTitleEls[i];
 				//.. I think it's better to considerer the element as removed, instead of just remove the filter.
 				// removeFilter(videoTitleEl);
 				caoglFilter.handleRemovedVideoTitleEl(videoTitleEl);
 			}
-			
+			//.. TODO: do something to avoid to iterate twice the observed elements (once to remove the filters, and then to apply a filter or a rating).
 			caoglObserver.processVideoTitleElements();
 		},
 		

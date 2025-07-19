@@ -68,7 +68,7 @@
 				for (let mutationIndex = 0; mutationIndex < mutations.length; mutationIndex++) {
 					let mutation = mutations[mutationIndex];
 					for (let nodeIndex = 0; nodeIndex < mutation.addedNodes.length; nodeIndex++) {
-						/** @type {HTMLIFrameElement} */
+						/** @type {HTMLElement} */
 						let addedNode = mutation.addedNodes[nodeIndex];
 						if (addedNode.nodeType != Node.ELEMENT_NODE)
 							continue;

@@ -25,7 +25,7 @@
 	
 	/**
 	 * Inject the scripts:
-	 * - observing the changes in the DOM (specially the adds and changes of the #video-title elements)
+	 * - observing the changes in the DOM (specially the adds and changes of the video title elements)
 	 * - changing the color of the title of the videos based on their rating
 	 * - filtering videos
 	 * - returning the VISITOR_DATA for the downloading of videos
