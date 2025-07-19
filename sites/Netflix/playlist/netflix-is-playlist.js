@@ -148,7 +148,7 @@ const caoglPlaylist = (function () {
 		 * @param {String} url 
 		 */
 		XMLHttpRequest.prototype.open = function (method, url) {
-			//.. Note: the request "pathEvaluator" only contains the title, the advised age, and the synopsis.
+			//.. Note: the request "pathEvaluator" only contains the title, the advised age, the synopsis and the episode count.
 			//.. It doesn't contain the casting, directors, moods, tags...
 			
 			if (url == GRAPHQL_URL) {
@@ -432,18 +432,30 @@ const caoglPlaylist = (function () {
 	 * @param {Number} videoId 
 	 */
 	function getEpisodeCountFromFalcorCache(videoId) {
+		//.. Note: sometimes, when I add a serie in my playlist, it is saved in the database with the correct number of episodes.
+		//.. But, when I remove this serie from my playlist, the episode count can't be find in the different variables.
+		//.. So, for now, based on where the problem is, I set a negative value (sometimes I get -1, or -2).
+		//.. And the localhost won't update the database if it receives a negative value.
+		//.. TODO: find a final solution for this, maybe by intercepting a request having the episode count, like the "pathEvaluator".
+		
 		let falcorCache = getFalcorCacheByVideoId(videoId);
 		if (falcorCache == null)
-			return 0;
+			return -1;
 		
 		//.. Either the property "episodeCount" is directly accessible
 		//.. (if we get here from the variable "reactContext" with an url looking like: https://www.netflix.com/browse?jbv=<video-id>)
 		//.. or there is the property "jawSummary" that contains the property "episodeCount".
-		if (falcorCache.episodeCount != null && falcorCache.episodeCount.value != null)
-			return getPropertyNumericValue(falcorCache.episodeCount, "value");
+		if (falcorCache.episodeCount != null && falcorCache.episodeCount.value != null) {
+			let episodeCount = getPropertyNumericValue(falcorCache.episodeCount, "value");
+			if (episodeCount > 0)
+				return episodeCount;
+		}
 		if (falcorCache.jawSummary == null || falcorCache.jawSummary.value == null)
-			return 0;
-		return getPropertyNumericValue(falcorCache.jawSummary.value, "episodeCount");
+			return -2;
+		let episodeCount = getPropertyNumericValue(falcorCache.jawSummary.value, "episodeCount");
+		if (episodeCount <= 0)
+			return -3;
+		return episodeCount;
 	}
 	
 	/**
@@ -719,14 +731,14 @@ const caoglPlaylist = (function () {
 	 * Create some functions accessible in the devtools console.
 	 */
 	(function consoleFunctions() {
-		let caoglPlaylistTests = {};
+		let caoglPlaylistConsole = {};
 		
-		caoglPlaylistTests.getCurrentVideoIdFromUrl = getCurrentVideoIdFromUrl;
+		caoglPlaylistConsole.getCurrentVideoIdFromUrl = getCurrentVideoIdFromUrl;
 		
 		/**
 		 * Get the current video data from the variable "netflix.falcorCache".
 		 */
-		caoglPlaylistTests.getCurrentVideoDataFromFalcorCache = function () {
+		caoglPlaylistConsole.getCurrentVideoDataFromFalcorCache = function () {
 			let videoId = getCurrentVideoIdFromUrl();
 			if (videoId == 0) {
 				console.log("Can't get the id of the current video from the url.");
@@ -740,7 +752,7 @@ const caoglPlaylist = (function () {
 		 * Get the variable "netflix.falcorCache" for the given video id.
 		 * @param {Number} videoId 
 		 */
-		caoglPlaylistTests.getFalcorCacheByVideoId = function (videoId) {
+		caoglPlaylistConsole.getFalcorCacheByVideoId = function (videoId) {
 			let data = getFalcorCacheByVideoId(videoId);
 			return data;
 		};
@@ -748,7 +760,7 @@ const caoglPlaylist = (function () {
 		/**
 		 * Get the variable "netflix.falcorCache" for the current video.
 		 */
-		caoglPlaylistTests.getCurrentVideoDataFromFalcorCache = function () {
+		caoglPlaylistConsole.getCurrentVideoDataFromFalcorCache = function () {
 			let videoId = getCurrentVideoIdFromUrl();
 			if (videoId == 0) {
 				console.log("Can't get the id of the current video from the url.");
@@ -760,8 +772,9 @@ const caoglPlaylist = (function () {
 		
 		/**
 		 * Get the current video data from the variable "netflix.reactContext".
+		 * TODO: another function has the same name...
 		 */
-		caoglPlaylistTests.getCurrentVideoDataFromReactContext = function () {
+		caoglPlaylistConsole.getCurrentVideoDataFromReactContext = function () {
 			let videoId = getCurrentVideoIdFromUrl();
 			if (videoId == 0) {
 				console.log("can't get the id of the current video from the url.");
@@ -775,15 +788,16 @@ const caoglPlaylist = (function () {
 		 * Get the variable "netflix.reactContext" for the given video id.
 		 * @param {Number} videoId 
 		 */
-		caoglPlaylistTests.getReactContextByVideoId = function (videoId) {
+		caoglPlaylistConsole.getReactContextByVideoId = function (videoId) {
 			let data = getReactContextByVideoId(videoId);
 			return data;
 		};
 		
 		/**
 		 * Get the variable "netflix.reactContext" for the current video.
+		 * TODO: another function has the same name...
 		 */
-		caoglPlaylistTests.getCurrentVideoDataFromReactContext = function () {
+		caoglPlaylistConsole.getCurrentVideoDataFromReactContext = function () {
 			let videoId = getCurrentVideoIdFromUrl();
 			if (videoId == 0) {
 				console.log("can't get the id of the current video from the url.");
@@ -797,7 +811,7 @@ const caoglPlaylist = (function () {
 		 * @param {String} operation add/remove
 		 * @param {Number} videoId 
 		 */
-		caoglPlaylistTests.displayModal = function (operation, videoId) {
+		caoglPlaylistConsole.displayModal = function (operation, videoId) {
 			if (operation == null)
 				operation = "add/remove";
 			let videoData = null;
@@ -806,13 +820,19 @@ const caoglPlaylist = (function () {
 			else
 				videoData = getCurrentVideoData();
 			displayModal(operation, videoData);
-		}
+		};
 		
-		caoglPlaylistTests.getCachedVideoData = function () {
+		caoglPlaylistConsole.getCachedVideoData = function () {
 			return _dataByVideoId;
-		}
+		};
 		
-		window.caoglPlaylistTests = caoglPlaylistTests;
+		caoglPlaylistConsole.getCurrentVideoEpisodeCountFromFalcorCache = function () {
+			let videoId = caoglPlaylistConsole.getCurrentVideoIdFromUrl();
+			let episodeCount = getEpisodeCountFromFalcorCache(videoId);
+			return episodeCount;
+		};
+		
+		window.caoglPlaylistConsole = caoglPlaylistConsole;
 	})();
 	
 	/**
