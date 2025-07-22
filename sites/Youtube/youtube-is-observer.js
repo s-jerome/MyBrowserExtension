@@ -36,8 +36,8 @@ const caoglObserver = (function () {
 					else if (addedNode.tagName == "YT-LOCKUP-VIEW-MODEL") {
 						//.. Note: it's important to check if parentElement is not null, because sometimes apparently it is...
 						if (addedNode.parentElement != null && addedNode.parentElement.id != null &&
-							addedNode.parentElement.id.indexOf("content") == 0) {
-							//.. If the parent id is "contents", then the video is a suggested video on the right.
+							(addedNode.parentElement.id.indexOf("content") == 0 || addedNode.parentElement.id == "items")) {
+							//.. If the parent id is "contents" or "items", then the video is a suggested video on the right.
 							//.. If the parent id is "content", then the video is a video on the homepage.
 							processLockupViewModelElement(addedNode);
 						}
