@@ -33,9 +33,14 @@ const caoglObserver = (function () {
 						continue; //.. It's an element I add in caoglFilter to replace the actual title when the video is filtered.
 					if (addedNode.id == "video-title")
 						processVideoTitleElement(addedNode, true); //.. Should never happen...
-					else if (addedNode.tagName == "YT-LOCKUP-VIEW-MODEL" && addedNode.parentElement.id == "contents") {
-						//.. A suggested video on the right.
-						processSuggestedVideo(addedNode);
+					else if (addedNode.tagName == "YT-LOCKUP-VIEW-MODEL") {
+						//.. Note: it's important to check if parentElement is not null, because sometimes apparently it is...
+						if (addedNode.parentElement != null && addedNode.parentElement.id != null &&
+							addedNode.parentElement.id.indexOf("content") == 0) {
+							//.. If the parent id is "contents", then the video is a suggested video on the right.
+							//.. If the parent id is "content", then the video is a video on the homepage.
+							processLockupViewModelElement(addedNode);
+						}
 					} else {
 						findAndProcessVideoTitleElementsById(addedNode);
 					}
@@ -69,9 +74,8 @@ const caoglObserver = (function () {
 	 * @param {HTMLElement} parent 
 	 */
 	function findAndProcessVideoTitleElementsById(parent) {
-		//.. Every videos (in the homepage, in a channel page, in a playlist),
-		//.. except the suggested ones on the right,
-		//.. have their title in a #video-title element.
+		//.. The videos in a channel page, or in a playlist, or in the result of a search, have their title in a #video-title element.
+		//.. The suggested videos on the right and the videos on the homepage are different since 2025-07.
 		let videoTitleEls = parent.querySelectorAll("#video-title");
 		for (let i = 0; i < videoTitleEls.length; i++) {
 			let videoTitleEl = videoTitleEls[i];
@@ -110,8 +114,8 @@ const caoglObserver = (function () {
 	 */
 	function getVideoIdFromTitleElement(videoTitleEl) {
 		if (videoTitleEl.tagName == "A") {
-			//.. It's either a suggested video on the right, or a video on a playlist,
-			//.. or a video on the "Home" page of a channel.
+			//.. It's either a suggested video on the right, or a video on the homepage,
+			//.. or a video on a playlist, or a video on the "Home" page of a channel.
 			/** @type {HTMLAnchorElement} */
 			let anchor = videoTitleEl;
 			//.. Note: using a regex is at least twice as fast as using the searchParams of a URL instance.
@@ -123,7 +127,7 @@ const caoglObserver = (function () {
 		}
 		
 		//.. It should be a yt-formatted-string element,
-		//.. on the homepage, or on the "Videos" page of a channel, or in the search result.
+		//.. on the "Videos" page of a channel, or in the search result.
 		if (document.location.href.indexOf("/playlist?list=") < 0) {
 			if (videoTitleEl.__dataHost == null)
 				return "";
@@ -161,11 +165,12 @@ const caoglObserver = (function () {
 	
 	/**
 	 * Find the title of the video in the given element and process it.
-	 * @param {HTMLElement} lockupViewModelEl A yt-lockup-view-model element, representing a suggested video on the right.
+	 * @param {HTMLElement} lockupViewModelEl A yt-lockup-view-model element, representing a suggested video on the right, or a video on the homepage.
 	 */
-	function processSuggestedVideo(lockupViewModelEl) {
-		//.. The suggested videos have no longer a #video-title element since 2025-07.
-		//.. @@Doc: documentation/Youtube/RatedVideos/suggested-videos.html
+	function processLockupViewModelElement(lockupViewModelEl) {
+		//.. The suggested videos and the videos on the homepage have no longer a #video-title element since 2025-07.
+		//.. @@Doc: documentation/Youtube/RatedVideos/suggested-video.html
+		//.. @@Doc: documentation/Youtube/RatedVideos/homepage-video.html
 		//.. There is multiple children span, but there is only 1 h3.
 		//.. I don't select it because changing its color doesn't work.
 		let spans = lockupViewModelEl.querySelectorAll("h3 > a > span");
