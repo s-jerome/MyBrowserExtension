@@ -56,14 +56,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 				return true;
 			}
 		} else if (message.site == "Twitter") {
-			if (message.action == "getMarkedTweets") {
-				let markedTweets = Twitter.getMarkedTweets(message.lastSyncISO);
-				sendResponse(markedTweets);
-			} else if (message.action == "markTweet") {
-				Twitter.addMarkedTweet(message.tweetId, message.tweetUrl);
-				//.. Send a response so that the content script knows it worked.
-				sendResponse(message);
-			} else if (message.action == "openTab") {
+			if (message.action == "openTab") {
 				openTab(message.url, sender.tab);
 			}
 		} else if (message.site == "Youtube") {
@@ -122,6 +115,6 @@ function openTab(url, fromTab) {
 
 (async function init() {
 	await Config.read();
-	Twitter.readSavedMarkedTweets();
+	Twitter.deleteOlderTweets();
 	YoutubeRating.getAllRatedVideosAsync();
 })();

@@ -6,8 +6,8 @@
 	 */
 	const ANCHOR_OR_SPAN = "A";
 	
-	/** @type {Set<String>} */
-	let _markedTweetIds = new Set();
+	/** @type {Map<String, {tweetId: String, markedAt: String, tweetUrl: String}>} */
+	let _markedTweets = new Map();
 	
 	let _config = {
 		markText: "Mark",
@@ -30,34 +30,59 @@
 	 */
 	const REGEX_TWEET_ID = new RegExp(/\/status\/(?<tweetId>\d{10,})$/);
 	
-	/** 
-	 * The last time the marked tweets were sync with the background, in ISO format.
-	 * @type {String}
+	/**
+	 * The timeout used to save the marked tweets in the storage.
+	 * I don't want to save them each time I mark a tweet,
+	 * because I might mark multiple of them in a laps of a few seconds,
+	 * so I setup a timeout.
 	 */
-	let _lastMarkedTweetsSyncISO = "";
+	let _saveTimeout = null;
 	
 	/**
-	 * Get the marked tweets from the background.
+	 * Determine if the storage changed, e.g. I marked tweets while being on another Twitter page.
 	 */
-	function getMarkedTweets() {
-		chrome.runtime.sendMessage({ site: "Twitter", action: "getMarkedTweets", lastSyncISO: _lastMarkedTweetsSyncISO }, function (response) {
-			/** @type {Array<String>} */
-			let tweetIds = response;
-			if (Array.isArray(tweetIds) && tweetIds.length > 0) {
-				let newMarkedTweetsReceived = false;
-				for (let i = 0; i < tweetIds.length; i++) {
-					let tweetId = tweetIds[i];
-					if (_markedTweetIds.has(tweetId) == false) {
-						_markedTweetIds.add(tweetId);
-						newMarkedTweetsReceived = true;
-					}
-				}
-				
-				if (newMarkedTweetsReceived)
-					markTweetsOnPage();
+	let _storageChanged = false;
+	
+	function handleStorageChanged(changes, /** @type {String} */ areaName) {
+		if (areaName != "local")
+			return;
+		if (changes["Twitter.MarkedTweets"] == null || changes["Twitter.MarkedTweets"].newValue == null)
+			return;
+		let newTweetsAreAdded = addNewMarkedTweets(changes["Twitter.MarkedTweets"].newValue);
+		if (newTweetsAreAdded) {
+			if (document.hidden) {
+				//.. I marked tweets on another Twitter tab, and they are saved in the storage, firing this event.
+				//.. The current page is actually hidden, so no need to loop through the DOM.
+				//.. It will be done when "visibilitychange" event will be fired.
+				_storageChanged = true;
 			}
-			_lastMarkedTweetsSyncISO = new Date().toISOString();
-		});
+			else {
+				//.. I marked tweets on another Twitter tab, and I get on this tab before the end of the timeout in charge of the save in the storage.
+				//.. This is what happens:
+				//.. 1. the "visibilitychange" event of the other tab is fired, provoking the save in the storage
+				//.. 2. the "visibilitychange" event of this tab is fired, but the save in the storage is not done yet
+				//.. 3. the save in the storage is done, so this event is fired.
+				markTweetsOnPage();
+			}
+		}
+	}
+	
+	chrome.storage.onChanged.addListener(handleStorageChanged);
+	
+	/**
+	 * @param {Array<{tweetId: String, markedAt: String, tweetUrl: String}>} markedTweets 
+	 * @returns true if new marked tweets are added to list; false otherwise.
+	 */
+	function addNewMarkedTweets(markedTweets) {
+		let added = false;
+		for (let i = 0; i < markedTweets.length; i++) {
+			let markedTweet = markedTweets[i];
+			if (_markedTweets.has(markedTweet.tweetId) == false) {
+				_markedTweets.set(markedTweet.tweetId, markedTweet);
+				added = true;
+			}
+		}
+		return added;
 	}
 	
 	/**
@@ -81,7 +106,7 @@
 		}
 		if (tweetId == "")
 			return;
-		if (_markedTweetIds.has(tweetId)) {
+		if (_markedTweets.has(tweetId)) {
 			if (article.style.backgroundColor != _config.backgroundColor) {
 				article.style.setProperty("background-color", _config.backgroundColor);
 			}
@@ -183,19 +208,15 @@
 	}
 	
 	/**
-	 * Mark the given tweet as seen (send its id to the background and change the background-color).
+	 * Mark the given tweet as seen by changing its background color and saving it in the storage.
 	 * @param {HTMLElement} anchor 
 	 */
 	function markTweetAsSeen(anchor) {
-		if (_markedTweetIds.has(anchor.__caogl_tweetId) == false) {
-			_markedTweetIds.add(anchor.__caogl_tweetId);
-			//.. When a tweet is marked, its id is sent to the background where all the marked tweets on all pages are centralised;
-			chrome.runtime.sendMessage({ site: "Twitter", action: "markTweet", tweetId: anchor.__caogl_tweetId, tweetUrl: anchor.href }, function (response) {
-				//.. The background color changes only if a response is received from the background,
-				//.. so I know it worked.
-				anchor.__caogl_article.style.backgroundColor = _config.backgroundColor;
-				_lastMarkedTweetsSyncISO = new Date().toISOString();
-			});
+		if (_markedTweets.has(anchor.__caogl_tweetId) == false) {
+			//.. Note: the date has to be in ISO to be converted by the Date constructor.
+			_markedTweets.set(anchor.__caogl_tweetId, { tweetId: anchor.__caogl_tweetId, markedAt: new Date().toISOString(), tweetUrl: anchor.href });
+			save();
+			anchor.__caogl_article.style.backgroundColor = _config.backgroundColor;
 		}
 	}
 	
@@ -233,7 +254,12 @@
 			}
 		}, true);
 		
-		getMarkedTweets();
+		chrome.storage.local.get({ "Twitter.MarkedTweets": [] }, function (items) {
+			/** @type {Array<String>} */
+			let markedTweets = items["Twitter.MarkedTweets"];
+			addNewMarkedTweets(markedTweets);
+			markTweetsOnPage();
+		});
 		
 		//.. Observe the adding of tweets to mark them as seen if necessary.
 		let mutationObserver = new MutationObserver(function (mutations) {
@@ -272,9 +298,35 @@
 			//.. The visibility changes when going on another tab, or when Chrome is minimised.
 			//.. Each time the visibility changes, all the marked tweets are get, in case I was on a Twitter1 page, then moved on Twitter2 page, marked some tweets,
 			//.. and then come back to Twitter1 page.
-			if (document.hidden == false) {
-				getMarkedTweets();
+			if (document.hidden) {
+				if (_saveTimeout != null)
+					saveNow();
+			} else if (_storageChanged) {
+				//.. Tweets were marked on another Twitter tab and saved in the storage.
+				_storageChanged = false;
+				markTweetsOnPage();
 			}
+		});
+	}
+	
+	function save() {
+		if (_saveTimeout == null) {
+			_saveTimeout = setTimeout(function () {
+				saveNow();
+			}, 15000);
+		}
+	}
+	
+	function saveNow() {
+		if (_saveTimeout != null) {
+			clearTimeout(_saveTimeout);
+			_saveTimeout = null;
+		}
+		
+		let markedTweets = Array.from(_markedTweets.values());
+		chrome.storage.onChanged.removeListener(handleStorageChanged);
+		chrome.storage.local.set({ "Twitter.MarkedTweets": markedTweets }, function () {
+			chrome.storage.onChanged.addListener(handleStorageChanged);
 		});
 	}
 	

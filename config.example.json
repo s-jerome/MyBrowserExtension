@@ -1,4 +1,4 @@
 {
 	"localhostPort": "8801",
-	"Twitter.markedTweets.mostRecentDays": 7
+	"Twitter.markedTweets.retentionDays": 7
 }
