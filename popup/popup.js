@@ -1,19 +1,19 @@
 function injectCSS(cssFilePath) {
 	let cssEl = document.createElement("link");
 	cssEl.setAttribute("rel", "stylesheet");
-	cssEl.href = chrome.extension.getURL(cssFilePath);
+	cssEl.href = chrome.runtime.getURL(cssFilePath);
 	document.head.appendChild(cssEl);
 }
 
 function injectJS(jsFilePath) {
 	let scriptEl = document.createElement("script");
-	scriptEl.src = chrome.extension.getURL(jsFilePath);
+	scriptEl.src = chrome.runtime.getURL(jsFilePath);
 	document.body.appendChild(scriptEl);
 }
 
 function injectPage(htmlFilePath, jsFilePath, cssFilePath) {
 	document.body.innerHTML = "";
-	let url = chrome.extension.getURL(htmlFilePath);
+	let url = chrome.runtime.getURL(htmlFilePath);
 	fetch(url).then(function (response) {
 		response.text().then(function (text) {
 			document.body.innerHTML = text;
@@ -25,7 +25,8 @@ function injectPage(htmlFilePath, jsFilePath, cssFilePath) {
 	});
 }
 
-chrome.tabs.getSelected(function (selectedTab) {
+chrome.tabs.query({ active: true, lastFocusedWindow: true }, function (tabs) {
+	let selectedTab = tabs[0];
 	window.selectedTab = selectedTab;
 	
 	if (selectedTab.url.indexOf("linkedin.com/") >= 0) {

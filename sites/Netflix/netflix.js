@@ -15,7 +15,7 @@
 		return new Promise(function (resolve, reject) {
 			try {
 				let scriptEl = document.createElement("script");
-				scriptEl.src = chrome.extension.getURL(jsFilePath);
+				scriptEl.src = chrome.runtime.getURL(jsFilePath);
 				scriptEl.onload = function () {
 					resolve();
 				};

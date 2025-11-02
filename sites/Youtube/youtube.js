@@ -7,7 +7,7 @@
 	(function injectRequestsInterceptorScript() {
 		let scriptEl = document.createElement("script");
 		scriptEl.id = "caogl-requests-interceptor";
-		scriptEl.src = chrome.extension.getURL("/sites/Youtube/youtube-is-requests-interceptor.js");
+		scriptEl.src = chrome.runtime.getURL("/sites/Youtube/youtube-is-requests-interceptor.js");
 		let e = document.body || document.documentElement;
 		e.appendChild(scriptEl);
 	})();
@@ -18,7 +18,7 @@
 	(function injectVideoDetailsScript() {
 		let scriptEl = document.createElement("script");
 		scriptEl.id = "caogl-video-details";
-		scriptEl.src = chrome.extension.getURL("/sites/Youtube/youtube-is-video-details.js");
+		scriptEl.src = chrome.runtime.getURL("/sites/Youtube/youtube-is-video-details.js");
 		let e = document.body || document.documentElement;
 		e.appendChild(scriptEl);
 	})();
@@ -103,7 +103,7 @@
 	function createScriptElement(jsFilePath, id) {
 		let scriptEl = document.createElement("script");
 		scriptEl.id = id;
-		scriptEl.src = chrome.extension.getURL(jsFilePath);
+		scriptEl.src = chrome.runtime.getURL(jsFilePath);
 		return scriptEl;
 	}
 	

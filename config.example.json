@@ -1,4 +1,5 @@
 {
 	"localhostPort": "8801",
+	"enableHeartbeat": false,
 	"Twitter.markedTweets.retentionDays": 7
 }

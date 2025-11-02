@@ -57,7 +57,7 @@ function injectPostScript(postId) {
 		document.body.appendChild(hiddenInputEl);
 		
 		let scriptEl = document.createElement("script");
-		scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-post-absolute-date.js");
+		scriptEl.src = chrome.runtime.getURL("/sites/LinkedIn/linkedin-is-post-absolute-date.js");
 		document.head.appendChild(scriptEl);
 	}
 }
@@ -67,7 +67,7 @@ function injectPostScript(postId) {
  */
 function injectRequestBlockingScript() {
 	let scriptEl = document.createElement("script");
-	scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-request-blocking.js");
+	scriptEl.src = chrome.runtime.getURL("/sites/LinkedIn/linkedin-is-request-blocking.js");
 	scriptEl.onload = function () {
 		chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			if (message.action == "getConfig") {
@@ -100,7 +100,7 @@ function injectRequestBlockingScript() {
 		//.. I inject the script adding a button to open posts on new tabs.
 		
 		let scriptEl = document.createElement("script");
-		scriptEl.src = chrome.extension.getURL("/sites/LinkedIn/linkedin-is-open-post-new-tab.js");
+		scriptEl.src = chrome.runtime.getURL("/sites/LinkedIn/linkedin-is-open-post-new-tab.js");
 		scriptEl.onload = function () {
 			window.addEventListener("caoglOpenTab", function (customEvent) {
 				chrome.runtime.sendMessage(customEvent.detail);

@@ -1,11 +1,11 @@
 {
-	"manifest_version": 2,
+	"manifest_version": 3,
 	
 	"name": "MyBrowserExtension",
 	"description": "",
-	"version": "1.17.0",
+	"version": "2.0.0",
 	
-	"browser_action":
+	"action":
 	{
 		"default_title": "MyBrowserExtension",
 		"default_popup": "/popup/popup.html"
@@ -13,15 +13,8 @@
 	
 	"background":
 	{
-		"scripts":
-		[ 
-			"/background/bg-config.js", "/background/context-menu.js", 
-			"/background/sites/bg-netflix.js", "/background/sites/bg-twitter.js", 
-			"/background/sites/bg-youtube-download.js", "/background/sites/bg-youtube-rating.js", 
-			"/background/background.js",
-			"/background/features/GoBack/bg-go-back.js"
-		],
-		"persistent": true
+		"service_worker": "/background/service-worker.js",
+		"type": "module"
 	},
 	
 	"content_scripts":
@@ -99,32 +92,74 @@
 		}
 	],
 	
-	"permissions": [ "<all_urls>", "contextMenus", "storage", "tabs", "webRequest" ],
+	"permissions": [ "alarms", "contextMenus", "scripting", "storage", "tabs", "webRequest" ],
+	"host_permissions": [ "<all_urls>" ],
 	
 	"web_accessible_resources":
 	[
-		"/features/VideoSleep/video-sleep-modal.html",
-		
-		"/sites/LinkedIn/linkedin-is-open-post-new-tab.js",
-		"/sites/LinkedIn/linkedin-is-post-absolute-date.js",
-		"/sites/LinkedIn/linkedin-is-request-blocking.js",
-		
-		"/sites/Netflix/netflix-is.js",
-		"/sites/Netflix/netflix-is-elapsed-time.js",
-		"/sites/Netflix/netflix-is-seek.js",
-		"/sites/Netflix/playlist/netflix-playlist-modal.html",
-		"/sites/Netflix/playlist/netflix-playlist-modal.js",
-		"/sites/Netflix/playlist/netflix-is-playlist.js",
-		
-		"/sites/tv.orange.fr/tv.orange.fr.css",
-		
-		"/sites/Twitter/twitter-is-remove-promoted-tweets.js",
-		
-		"/sites/Youtube/youtube-is-download.js",
-		"/sites/Youtube/youtube-is-filter.js",
-		"/sites/Youtube/youtube-is-observer.js",
-		"/sites/Youtube/youtube-is-rated-videos.js",
-		"/sites/Youtube/youtube-is-requests-interceptor.js",
-		"/sites/Youtube/youtube-is-video-details.js"
+		{
+			"resources": [
+				"/features/VideoSleep/video-sleep-modal.html"
+			],
+			"matches": [
+				"https://www.netflix.com/*",
+				"https://tv.orange.fr/*",
+				"https://www.twitch.tv/*",
+				"https://www.youtube.com/*"
+			]
+		},
+		{
+			"resources": [
+				"/sites/LinkedIn/linkedin-is-open-post-new-tab.js",
+				"/sites/LinkedIn/linkedin-is-post-absolute-date.js",
+				"/sites/LinkedIn/linkedin-is-request-blocking.js"
+			],
+			"matches": [
+				"https://*.linkedin.com/*"
+			]
+		},
+		{
+			"resources": [
+				"/sites/Netflix/netflix-is.js",
+				"/sites/Netflix/netflix-is-elapsed-time.js",
+				"/sites/Netflix/netflix-is-seek.js",
+				"/sites/Netflix/playlist/netflix-playlist-modal.html",
+				"/sites/Netflix/playlist/netflix-playlist-modal.js",
+				"/sites/Netflix/playlist/netflix-is-playlist.js"
+			],
+			"matches": [
+				"https://*.netflix.com/*"
+			]
+		},
+		{
+			"resources": [
+				"/sites/tv.orange.fr/tv.orange.fr.css"
+			],
+			"matches": [
+				"https://tv.orange.fr/*"
+			]
+		},
+		{
+			"resources": [
+				"/sites/Twitter/twitter-is-remove-promoted-tweets.js"
+			],
+			"matches": [
+				"https://*.twitter.com/*",
+				"https://*.x.com/*"
+			]
+		},
+		{
+			"resources": [
+				"/sites/Youtube/youtube-is-download.js",
+				"/sites/Youtube/youtube-is-filter.js",
+				"/sites/Youtube/youtube-is-observer.js",
+				"/sites/Youtube/youtube-is-rated-videos.js",
+				"/sites/Youtube/youtube-is-requests-interceptor.js",
+				"/sites/Youtube/youtube-is-video-details.js"
+			],
+			"matches": [
+				"https://www.youtube.com/*"
+			]
+		}
 	]
 }

@@ -3,7 +3,7 @@
 	
 	(function injectRemovePromotedTweetsScript() {
 		let scriptEl = document.createElement("script");
-		scriptEl.src = chrome.extension.getURL("/sites/Twitter/twitter-is-remove-promoted-tweets.js");
+		scriptEl.src = chrome.runtime.getURL("/sites/Twitter/twitter-is-remove-promoted-tweets.js");
 		let e = document.body || document.documentElement;
 		e.appendChild(scriptEl);
 	})();
