@@ -131,6 +131,7 @@ const caoglRatingVideo = (function () {
 			if (result.success) {
 				changeRatingButtonColor(rating);
 				_ratingByVideoId.set(videoDetails.videoId, rating);
+				_lastSyncTime = Date.now();
 			} else {
 				console.log(new Date().toLocaleString() + " -- [Youtube-is-rated-videos][sendRatedVideoToBackground] " + result.error);
 			}
